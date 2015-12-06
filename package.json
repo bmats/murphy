@@ -1,0 +1,45 @@
+{
+  "name": "murphy",
+  "version": "0.1.0",
+  "description": "Simple backup and restore.",
+  "private": true,
+  "main": "build/src/main.js",
+  "scripts": {
+    "postinstall": "tsd install",
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bmats/murphy.git"
+  },
+  "author": "Bryce Matsumori",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bmats/murphy/issues"
+  },
+  "homepage": "https://github.com/bmats/murphy#readme",
+  "dependencies": {
+    "material-ui": "^0.13.4",
+    "react": "^0.14.3",
+    "react-dom": "^0.14.3",
+    "react-tap-event-plugin": "^0.2.1"
+  },
+  "devDependencies": {
+    "babel-core": "^6.3.13",
+    "babel-preset-es2015": "^6.3.13",
+    "electron-prebuilt": "^0.35.4",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^6.1.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-livereload": "^3.8.1",
+    "gulp-load-plugins": "^1.1.0",
+    "gulp-shell": "^0.5.1",
+    "gulp-stylus": "^2.1.1",
+    "gulp-typescript": "^2.10.0",
+    "gulp-util": "^3.0.7",
+    "stylus": "^0.52.4",
+    "tsd": "^0.6.5",
+    "typescript": "^1.7.3"
+  }
+}
