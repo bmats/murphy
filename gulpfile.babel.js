@@ -1,5 +1,6 @@
 import gulp from 'gulp';
 import gulpLoadPlugins from 'gulp-load-plugins';
+import Jasmine from 'jasmine';
 
 const $ = gulpLoadPlugins();
 
@@ -7,7 +8,8 @@ const paths = {
   typescript: 'src/**/*',
   static: 'static/*.*',
   styles: 'static/styles/*',
-  build: './build'
+  build: './build',
+  spec: 'spec/**/*.js'
 };
 
 function logError(err) {
@@ -56,6 +58,18 @@ gulp.task('watch', ['build'], () => {
     if (!err) gulp.start('start', restart);
   }
   restart();
+});
+
+gulp.task('babel-test', () => {
+  return gulp.src(paths.spec)
+    .pipe($.babel().on('error', logError))
+    .pipe(gulp.dest(paths.build + '/spec'));
+});
+
+gulp.task('test', ['typescript', 'babel-test'], () => {
+  var jasmine = new Jasmine();
+  jasmine.loadConfigFile('spec/support/jasmine.json');
+  jasmine.execute();
 });
 
 gulp.task('start', $.shell.task('electron .'));

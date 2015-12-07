@@ -6,7 +6,7 @@ export default class Engine {
   private _config: Config;
 
   constructor() {
-    Config.load((config: Config, err) => {
+    Config.load((err, config: Config) => {
       if (err) {
         // TODO: handle
         return;
