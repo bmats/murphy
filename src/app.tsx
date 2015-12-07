@@ -2,7 +2,7 @@ import * as React from 'react';
 const ReactDOM = require('react-dom');
 import * as utils from './utils';
 import MainComponent from './components/MainComponent';
-import Source from './Source';
+import Source from './engine/Source';
 
 require('react-tap-event-plugin')();
 

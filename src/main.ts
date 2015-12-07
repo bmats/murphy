@@ -2,6 +2,9 @@
 const electron = require('electron');
 const app = electron.app;  // Module to control application life.
 const BrowserWindow = electron.BrowserWindow;  // Module to create native browser window.
+import * as winston from 'winston';
+
+winston.add(winston.transports.File, { filename: 'murphy.log' });
 
 // Report crashes to our server.
 // electron.crashReporter.start();
@@ -24,6 +27,7 @@ app.on('window-all-closed', () => {
 app.on('ready', () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 800, height: 600});
+  winston.info('Created BrowserWindow');
 
   // and load the index.html of the app.
   mainWindow.loadURL(`file://${__dirname}/../static/index.html`);

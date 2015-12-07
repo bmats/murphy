@@ -13,6 +13,21 @@
     },
     "material-ui/material-ui.d.ts": {
       "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
+    },
+    "github-electron/github-electron.d.ts": {
+      "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
+    },
+    "github-electron/github-electron-main.d.ts": {
+      "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
+    },
+    "github-electron/github-electron-renderer.d.ts": {
+      "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
+    },
+    "winston/winston.d.ts": {
+      "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
+    },
+    "async/async.d.ts": {
+      "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
     }
   }
 }

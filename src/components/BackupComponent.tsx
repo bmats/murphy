@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as MUI from 'material-ui';
 import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
 import Theme = require('./MurphyTheme');
-import Source from '../Source';
+import Source from '../engine/Source';
 import SourceSelect from './SourceSelect';
 import VerticalSeparator from './VerticalSeparator';
 
