@@ -27,4 +27,8 @@ export default class BackupJob extends EventEmitter {
       message: message
     });
   }
+
+  stop() {
+    this.emit('stop');
+  }
 }

@@ -1,5 +1,6 @@
 import * as async from 'async';
 import * as fs from 'fs';
+import * as crypto from 'crypto';
 import * as stream from 'stream';
 import * as winston from 'winston';
 
@@ -22,6 +23,112 @@ export default class Source {
 
   get paths(): string[] {
     return this._paths;
+  }
+
+  getFiles(): Promise<string[]> {
+    return new Promise<string[]>((resolve: (files: string[]) => void, reject: (reasons: string[]) => void) => {
+      let files: string[] = [];
+      let errors: string[] = [];
+
+      let directoryQueue = async.queue(checkDirectory);
+      directoryQueue.pause();
+      directoryQueue.drain = () => {
+        // If there are no errors, resolve, otherwise reject
+        if (errors.length === 0) {
+          files.sort();
+          resolve(files.map(file => Source.removeRootDirFromPath(file, this._rootDir)));
+        } else {
+          errors.sort();
+          reject(errors);
+        }
+      };
+
+      function checkFile(path: string, callback: (err) => any) {
+        fs.stat(path, (err, stats: fs.Stats) => {
+          if (err) {
+            winston.warn('fs.stat failed', { file: path, error: err });
+            let shortPath = Source.removeRootDirFromPath(path, this._rootDir);
+            errors.push(`Reading ${shortPath} failed (${err})`);
+            callback(null);
+            return;
+          }
+
+          if (stats.isFile()) {
+            // Save the file path
+            files.push(path);
+          } else if (stats.isDirectory()) {
+            // Queue the directory to be traversed
+            directoryQueue.push(path);
+          }
+          callback(null);
+        });
+      }
+
+      function checkDirectory(path: string, callback: (err) => any) {
+        fs.readdir(path, (err, files: string[]) => {
+          if (err) {
+            winston.warn('fs.readdir failed', { dir: path, error: err });
+            let shortPath = Source.removeRootDirFromPath(path, this._rootDir);
+            errors.push(`Opening folder ${shortPath} failed (${err})`);
+            callback(null);
+            return;
+          }
+
+          // Normalize path to end with '/' for concat below
+          if (!path.endsWith(DIRSEP)) path += DIRSEP;
+
+          async.each(files.map(file => path + file), checkFile, callback);
+        });
+      }
+
+      // Check the initial paths
+      async.each(this._paths, checkFile, (err) => {
+        // Start processing the directories left over
+        if (directoryQueue.length() > 0) {
+          directoryQueue.resume();
+        } else {
+          // queue.drain() is not called when empty and resumed
+          directoryQueue.drain();
+        }
+      });
+    });
+  }
+
+  createReadStream(file: string): stream.Readable {
+    file = this._rootDir + (this._rootDir.endsWith(DIRSEP) ? '' : DIRSEP) + file;
+    return fs.createReadStream(file);
+  }
+
+  getFileChecksum(file: string): Promise<string> {
+    return new Promise((resolve: (checksum: string) => void, reject: (err) => any) => {
+      let fileStream: stream.Readable = this.createReadStream(file);
+
+      let hash: stream.Duplex = crypto.createHash('sha1');
+      hash.setEncoding('hex');
+
+      fileStream.on('end', () => {
+        hash.end();
+        resolve(hash.read().toString());
+      });
+      fileStream.on('error', err => {
+        winston.error('Hashing error', { file: file, error: err });
+        reject(err);
+      })
+
+      fileStream.pipe(hash);
+    });
+  }
+
+  serialize(): any {
+    return {
+      name: this.name,
+      paths: this.paths
+    };
+  }
+
+  static unserialize(data: any): Source {
+    let source = new Source(data.name, data.paths);
+    return source;
   }
 
   private static findCommonRootDir(paths: string[]): string {
@@ -47,69 +154,16 @@ export default class Source {
     return paths[0];
   }
 
-  private static removeRootDirFromPaths(paths: string[], rootDir: string): string[] {
-    return paths.map((path: string) => {
-      // Cut off the root directory from the beginning
-      if (path.substr(0, rootDir.length) === rootDir) {
-        // Don't start with a '/'
-        if (path.charAt(rootDir.length) === DIRSEP) {
-          path = path.substr(rootDir.length + 1);
-        } else {
-          path = path.substr(rootDir.length);
-        }
+  private static removeRootDirFromPath(path: string, rootDir: string): string {
+    // Cut off the root directory from the beginning
+    if (path.substr(0, rootDir.length) === rootDir) {
+      // Don't start with a '/'
+      if (path.charAt(rootDir.length) === DIRSEP) {
+        return path.substr(rootDir.length + 1);
+      } else {
+        return path.substr(rootDir.length);
       }
-
-      return path;
-    });
-  }
-
-  getFiles(): Promise<string[]> {
-    return new Promise<string[]>((resolve: (files: string[]) => void, reject: (reason: any) => void) => {
-      let files: string[] = [];
-
-      function statAsyncAndList(rootPath: string, paths: string[]) {
-        async.map(paths, fs.stat, (err, stats: fs.Stats[]) => {
-          stats.forEach((stat: fs.Stats, i: number) => {
-            if (stat.isFile()) {
-              // Save the file path
-              files.push(paths[i]); // TODO: remove root path name
-            } else if (stat.isDirectory()) {
-              recursiveList(paths[i]);
-            }
-          });
-        });
-      }
-
-      function recursiveList(path: string) {
-        fs.readdir(path, (err, files: string[]) => {
-          statAsyncAndList(files);
-        });
-      }
-
-      statAsyncAndRecurseFolders('', this._paths);
-
-      // TODO: before returning files, do this:
-      files = Source.removeRootDirFromPaths(files, this._rootDir);
-    });
-  }
-
-  createReadStream(file: string): stream.Readable {
-    // TODO: implement
-  }
-
-  getFileChecksum(file: string): Promise<string> {
-    // TODO: implement
-  }
-
-  serialize(): any {
-    return {
-      name: this.name,
-      paths: this.paths
-    };
-  }
-
-  static unserialize(data: any): Source {
-    let source = new Source(data.name, data.paths);
-    return source;
+    }
+    return path;
   }
 }

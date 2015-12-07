@@ -1,4 +1,6 @@
 import Archive from './Archive';
+import ArchiveVersion from './ArchiveVersion';
+import FilesystemArchiveVersion from './FilesystemArchiveVersion';
 
 export default class FilesystemArchive extends Archive {
   private _path: string;
@@ -11,6 +13,22 @@ export default class FilesystemArchive extends Archive {
 
   get path(): string {
     return this._path;
+  }
+
+  init(): Promise<void> {
+    // TODO: implement
+  }
+
+  rebuild(): Promise<void> {
+    // TODO: implement
+  }
+
+  createVersion(): Promise<ArchiveVersion> {
+    // TODO: implement
+  }
+
+  getVersions(): Promise<ArchiveVersion[]> {
+    // TODO: implement
   }
 
   serialize(): any {
