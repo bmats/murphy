@@ -26,6 +26,7 @@ export default class Source {
   }
 
   getFiles(): Promise<string[]> {
+    const self = this;
     return new Promise<string[]>((resolve: (files: string[]) => void, reject: (reasons: string[]) => void) => {
       let files: string[] = [];
       let errors: string[] = [];
@@ -36,7 +37,7 @@ export default class Source {
         // If there are no errors, resolve, otherwise reject
         if (errors.length === 0) {
           files.sort();
-          resolve(files.map(file => Source.removeRootDirFromPath(file, this._rootDir)));
+          resolve(files.map(file => Source.removeRootDirFromPath(file, self._rootDir)));
         } else {
           errors.sort();
           reject(errors);
@@ -47,7 +48,7 @@ export default class Source {
         fs.stat(path, (err, stats: fs.Stats) => {
           if (err) {
             winston.warn('fs.stat failed', { file: path, error: err });
-            let shortPath = Source.removeRootDirFromPath(path, this._rootDir);
+            let shortPath = Source.removeRootDirFromPath(path, self._rootDir);
             errors.push(`Reading ${shortPath} failed (${err})`);
             callback(null);
             return;
@@ -68,7 +69,7 @@ export default class Source {
         fs.readdir(path, (err, files: string[]) => {
           if (err) {
             winston.warn('fs.readdir failed', { dir: path, error: err });
-            let shortPath = Source.removeRootDirFromPath(path, this._rootDir);
+            let shortPath = Source.removeRootDirFromPath(path, self._rootDir);
             errors.push(`Opening folder ${shortPath} failed (${err})`);
             callback(null);
             return;
@@ -82,7 +83,7 @@ export default class Source {
       }
 
       // Check the initial paths
-      async.each(this._paths, checkFile, (err) => {
+      async.each(self._paths, checkFile, (err) => {
         // Start processing the directories left over
         if (directoryQueue.length() > 0) {
           directoryQueue.resume();
@@ -95,7 +96,10 @@ export default class Source {
   }
 
   createReadStream(file: string): stream.Readable {
-    file = this._rootDir + (this._rootDir.endsWith(DIRSEP) ? '' : DIRSEP) + file;
+    let root = this._rootDir;
+    if (this._rootDir.length > 0 && !this._rootDir.endsWith(DIRSEP)) root += DIRSEP;
+    file = root + file;
+    console.log('file is', file);
     return fs.createReadStream(file);
   }
 
@@ -136,13 +140,13 @@ export default class Source {
     if (paths.length === 1) return paths[0];
 
     // Split each path up into folders
-    const pathFolders: string[][] = paths.map(path => path.split(DIRSEP));
+    const pathFolders: string[][] = paths.map(path => path.split(DIRSEP).filter(e => e.length > 0)); // remove empty
     for (let folderIndex = 0; folderIndex < pathFolders[0].length; ++folderIndex) {
       let folder = pathFolders[0][folderIndex];
 
       // Find the first mismatch in the other folder paths
       for (let j = 1; j < pathFolders.length; ++j) {
-        if (folder !== pathFolders[j][folderIndex]) {
+        if (pathFolders[j].length <= folderIndex || folder !== pathFolders[j][folderIndex]) {
           // Concat all the folders before this one
           return pathFolders[0].slice(0, folderIndex).join(DIRSEP);
         }
