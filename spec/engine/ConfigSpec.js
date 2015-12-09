@@ -1,16 +1,16 @@
 import fs from 'fs';
-import mockFs from 'mock-fs';
+import MockFs from 'mock-fs';
 import Config from '../../src/engine/Config';
 import Source from '../../src/engine/Source';
 
 describe('Config', () => {
 
   beforeEach(() => {
-    mockFs({});
+    MockFs({});
   });
 
   afterEach(() => {
-    mockFs.restore();
+    MockFs.restore();
   });
 
   describe('::load()', () => {
@@ -35,7 +35,7 @@ describe('Config', () => {
           }
         ]
       };
-      mockFs({
+      MockFs({
         [Config.fileName]: JSON.stringify(data)
       });
 
@@ -54,7 +54,7 @@ describe('Config', () => {
     });
 
     it('fails with invalid data', (done) => {
-      mockFs({
+      MockFs({
         [Config.fileName]: 'invalid JSON goes here'
       });
 

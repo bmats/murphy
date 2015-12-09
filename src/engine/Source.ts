@@ -49,7 +49,7 @@ export default class Source {
             winston.warn('fs.stat failed', { file: path, error: err });
             let shortPath = Source.removeRootDirFromPath(path, self._rootDir);
             errors.push(`Reading ${shortPath} failed (${err})`);
-            callback(null);
+            callback(undefined);
             return;
           }
 
@@ -60,7 +60,7 @@ export default class Source {
             // Queue the directory to be traversed
             directoryQueue.push(path);
           }
-          callback(null);
+          callback(undefined);
         });
       }
 
@@ -70,7 +70,7 @@ export default class Source {
             winston.warn('fs.readdir failed', { dir: path, error: err });
             let shortPath = Source.removeRootDirFromPath(path, self._rootDir);
             errors.push(`Opening folder ${shortPath} failed (${err})`);
-            callback(null);
+            callback(undefined);
             return;
           }
 
@@ -98,7 +98,6 @@ export default class Source {
     let root = this._rootDir;
     if (this._rootDir.length > 0 && !this._rootDir.endsWith(DIRSEP)) root += DIRSEP;
     file = root + file;
-    console.log('file is', file);
     return fs.createReadStream(file);
   }
 

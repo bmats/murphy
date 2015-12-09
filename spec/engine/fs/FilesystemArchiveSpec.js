@@ -1,5 +1,7 @@
 import fs from 'fs';
-import mockFs from 'mock-fs';
+import {sep as DIRSEP} from 'path';
+import MockFs from 'mock-fs';
+import MockDate from 'mockdate';
 import Archive from '../../../src/engine/Archive';
 import FilesystemArchive from '../../../src/engine/fs/FilesystemArchive';
 import FilesystemArchiveVersion from '../../../src/engine/fs/FilesystemArchiveVersion';
@@ -15,16 +17,46 @@ describe('FilesystemArchive', () => {
   });
 
   describe('.init()', () => {
-    beforeEach(() => {
-      mockFs({
-      });
+    const archivePath = 'archive';
+    beforeAll((done) => {
+      MockFs({});
+      const archive = new FilesystemArchive('Test Archive', archivePath);
+      archive.init()
+        .then(done);
     });
 
-    afterEach(() => {
-      mockFs.restore();
+    afterAll(() => {
+      MockFs.restore();
     });
 
-    // TODO: add specs
+    it('creates a root folder', () => {
+      const rootStats = fs.statSync(archivePath);
+      expect(rootStats.isDirectory()).toBe(true);
+    });
+
+    it('creates a readme', () => {
+      const readme = fs.statSync(archivePath + DIRSEP + 'READ ME.txt');
+      expect(readme.isFile()).toBe(true);
+      const content = fs.readFileSync(archivePath + DIRSEP + 'READ ME.txt');
+      expect(readme.size).toBeGreaterThan(0);
+    });
+
+    it('creates archive folders', () => {
+      const latest = fs.statSync(archivePath + DIRSEP + 'Latest');
+      expect(latest.isDirectory()).toBe(true);
+
+      const versions = fs.statSync(archivePath + DIRSEP + 'Versions');
+      expect(versions.isDirectory()).toBe(true);
+    });
+
+    it('fails when the folder exists', () => {
+      const existingFolder = 'existing';
+      fs.mkdirSync(existingFolder);
+      const archive = new FilesystemArchive('Test Archive', existingFolder);
+      archive.init()
+        .then(() => fail('Expected error'))
+        .catch((err) => expect(err).not.toBeUndefined());
+    });
   });
 
   describe('.rebuild()', () => {
@@ -32,7 +64,32 @@ describe('FilesystemArchive', () => {
   });
 
   describe('.createVersion()', () => {
-    // TODO: add specs
+    const archivePath = 'archive';
+    beforeAll(() => {
+      MockFs({});
+      MockDate.set(new Date('2018-01-11T05:00:00'));
+    });
+
+    afterAll(() => {
+      MockFs.restore();
+    });
+
+    it('returns a ArchiveVersion with the current time', (done) => {
+      const archive = new FilesystemArchive('Test Archive', archivePath);
+      archive.init();
+      archive.createVersion()
+        .then(fs.statSync(archivePath + DIRSEP + '2018-01-11 05-00-00'))
+        .catch(err => expect(err).toBeUndefined())
+        .then(done);
+    });
+
+    it('creates a folder', () => {
+      // TODO: impl
+    });
+
+    it('errors if the folder already exists', () => {
+      // TODO: impl
+    });
   });
 
   describe('.getVersions()', () => {

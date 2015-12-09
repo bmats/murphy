@@ -1,4 +1,4 @@
-import mockFs from 'mock-fs';
+import MockFs from 'mock-fs';
 import Source from '../../src/engine/Source';
 
 describe('Source', () => {
@@ -40,11 +40,11 @@ describe('Source', () => {
     }, {});
 
     beforeEach(() => {
-      mockFs(filesystem);
+      MockFs(filesystem);
     });
 
     afterEach(() => {
-      mockFs.restore();
+      MockFs.restore();
     });
 
     it('enumerates a single folder correctly', (done) => {
@@ -84,13 +84,13 @@ describe('Source', () => {
     const contents = 'The quick brown fox jumps over the lazy dog';
 
     beforeEach(() => {
-      mockFs({
+      MockFs({
         'folder/file.txt': contents
       });
     });
 
     afterEach(() => {
-      mockFs.restore();
+      MockFs.restore();
     });
 
     it('returns a valid stream', (done) => {
@@ -113,13 +113,13 @@ describe('Source', () => {
 
   describe('.getFileChecksum()', () => {
     beforeEach(() => {
-      mockFs({
+      MockFs({
         'folder/file.txt': 'The quick brown fox jumps over the lazy dog'
       });
     });
 
     afterEach(() => {
-      mockFs.restore();
+      MockFs.restore();
     });
 
     it('computes correct SHA1', (done) => {
