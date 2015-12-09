@@ -1,18 +1,13 @@
 import * as winston from 'winston';
 import ArchiveVersion from './ArchiveVersion';
-import FilesystemArchive from './FilesystemArchive';
 
 abstract class Archive {
   private _name: string;
   private _type: string;
 
-  constructor(name: string) {
+  constructor(name: string, type: string) {
     this._name = name;
-
-    if (this instanceof FilesystemArchive)
-      this._type = 'FilesystemArchive';
-    else
-      winston.warn('Unknown archive instance type', { instance: this });
+    this._type = type;
   }
 
   get name(): string {
@@ -50,7 +45,7 @@ abstract class Archive {
   static unserialize(data: any): Archive {
     switch (data.type) {
       case 'FilesystemArchive':
-        return FilesystemArchive.unserialize(data);
+        return require('./fs/FilesystemArchive').default.unserialize(data);
       default:
         winston.warn('Unknown serialized archive type', { type: data.type, data: data });
         return null;

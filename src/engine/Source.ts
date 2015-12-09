@@ -1,10 +1,9 @@
 import * as async from 'async';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import {sep as DIRSEP} from 'path';
 import * as stream from 'stream';
 import * as winston from 'winston';
-
-const DIRSEP = '/';
 
 export default class Source {
   private _name: string;
