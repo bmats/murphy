@@ -92,7 +92,7 @@ export default class FilesystemArchive extends Archive {
     });
   }
 
-  createVersion(): Promise<ArchiveVersion> {
+  createVersion(): Promise<FilesystemArchiveVersion> {
     const now: Date = new Date();
     const version: FilesystemArchiveVersion = new FilesystemArchiveVersion(now);
     const folderPath: string = this.path + DIRSEP + VERSIONS_FOLDER + DIRSEP + version.folderName;
@@ -116,7 +116,7 @@ export default class FilesystemArchive extends Archive {
     })).then(() => version);
   }
 
-  getVersions(): Promise<ArchiveVersion[]> {
+  getVersions(): Promise<FilesystemArchiveVersion[]> {
     return new Promise((resolve, reject) => {
       readdirPromise(this.path + DIRSEP + VERSIONS_FOLDER)
         .then(files => {

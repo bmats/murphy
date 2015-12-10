@@ -1,7 +1,7 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import {sep as DIRSEP} from 'path';
-import MockFs from 'mock-fs';
-import MockDate from 'mockdate';
+import * as MockFs from 'mock-fs';
+import * as MockDate from 'mockdate';
 import Archive from '../../../src/engine/Archive';
 import FilesystemArchive from '../../../src/engine/fs/FilesystemArchive';
 import FilesystemArchiveVersion from '../../../src/engine/fs/FilesystemArchiveVersion';
@@ -120,7 +120,7 @@ describe('FilesystemArchive', () => {
     ];
 
     // Create a map with each folder as key and {} as value
-    const folders = folderNames.reduce((map, file) => {
+    const folders: any = folderNames.reduce((map, file) => {
       map[file] = {};
       return map;
     }, {});

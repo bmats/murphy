@@ -13,7 +13,7 @@ export default class Source {
   constructor(name: string, paths: string[]) {
     this._name = name;
     this._paths = paths;
-    this._rootDir = Source.findCommonRootDir(paths);
+    this._rootDir = Source._findCommonRootDir(paths);
   }
 
   get name(): string {
@@ -36,7 +36,7 @@ export default class Source {
         // If there are no errors, resolve, otherwise reject
         if (errors.length === 0) {
           files.sort();
-          resolve(files.map(file => Source.removeRootDirFromPath(file, self._rootDir)));
+          resolve(files.map(file => Source._removeRootDirFromPath(file, self._rootDir)));
         } else {
           errors.sort();
           reject(errors);
@@ -47,7 +47,7 @@ export default class Source {
         fs.stat(path, (err, stats: fs.Stats) => {
           if (err) {
             winston.warn('fs.stat failed', { file: path, error: err });
-            let shortPath = Source.removeRootDirFromPath(path, self._rootDir);
+            let shortPath = Source._removeRootDirFromPath(path, self._rootDir);
             errors.push(`Reading ${shortPath} failed (${err})`);
             callback(undefined);
             return;
@@ -68,7 +68,7 @@ export default class Source {
         fs.readdir(path, (err, files: string[]) => {
           if (err) {
             winston.warn('fs.readdir failed', { dir: path, error: err });
-            let shortPath = Source.removeRootDirFromPath(path, self._rootDir);
+            let shortPath = Source._removeRootDirFromPath(path, self._rootDir);
             errors.push(`Opening folder ${shortPath} failed (${err})`);
             callback(undefined);
             return;
@@ -133,7 +133,7 @@ export default class Source {
     return source;
   }
 
-  private static findCommonRootDir(paths: string[]): string {
+  static _findCommonRootDir(paths: string[]): string {
     if (paths.length === 0) return '';
     if (paths.length === 1) return paths[0];
 
@@ -156,7 +156,7 @@ export default class Source {
     return paths[0];
   }
 
-  private static removeRootDirFromPath(path: string, rootDir: string): string {
+  static _removeRootDirFromPath(path: string, rootDir: string): string {
     // Cut off the root directory from the beginning
     if (path.substr(0, rootDir.length) === rootDir) {
       // Don't start with a '/'

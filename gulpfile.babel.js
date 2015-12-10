@@ -9,7 +9,7 @@ const paths = {
   static: 'static/*.*',
   styles: 'static/styles/*',
   build: './build',
-  spec: 'spec/**/*.js'
+  spec: 'spec/**/*.ts'
 };
 
 function logError(err) {
@@ -60,13 +60,18 @@ gulp.task('watch', ['build'], () => {
   restart();
 });
 
-gulp.task('babel-test', () => {
+gulp.task('typescript-test', () => {
   return gulp.src(paths.spec)
+    .pipe($.typescript({
+      target: 'es5', // TODO: es6 doesn't work
+      module: 'commonjs',
+      jsx: 'react'
+    })) // errors are logged
     .pipe($.babel().on('error', logError))
     .pipe(gulp.dest(paths.build + '/spec'));
 });
 
-gulp.task('test', ['typescript', 'babel-test'], () => {
+gulp.task('test', ['typescript', 'typescript-test'], () => {
   var jasmine = new Jasmine();
   jasmine.loadConfigFile('spec/support/jasmine.json');
   jasmine.execute();

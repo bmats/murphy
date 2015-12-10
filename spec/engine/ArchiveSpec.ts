@@ -9,5 +9,5 @@ describe('Archive', () => {
       const archive = new DummyArchive(name);
       expect(archive.name).toBe(name);
     });
-  })
+  });
 });

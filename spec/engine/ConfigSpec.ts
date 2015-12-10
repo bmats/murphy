@@ -1,5 +1,5 @@
-import fs from 'fs';
-import MockFs from 'mock-fs';
+import * as fs from 'fs';
+import * as MockFs from 'mock-fs';
 import Config from '../../src/engine/Config';
 import Source from '../../src/engine/Source';
 

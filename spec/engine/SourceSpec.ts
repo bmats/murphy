@@ -1,4 +1,4 @@
-import MockFs from 'mock-fs';
+import * as MockFs from 'mock-fs';
 import Source from '../../src/engine/Source';
 
 describe('Source', () => {
@@ -34,7 +34,7 @@ describe('Source', () => {
     ];
 
     // Create a map with each file as key and '' as value
-    const filesystem = files.reduce((map, file) => {
+    const filesystem: any = files.reduce((map, file) => {
       map[file] = '';
       return map;
     }, {});
@@ -152,14 +152,14 @@ describe('Source', () => {
     });
   });
 
-  describe('::findCommonRootDir()', () => {
+  describe('::_findCommonRootDir()', () => {
     it('returns an empty string for no paths', () => {
-      expect(Source.findCommonRootDir([])).toBe('');
+      expect(Source._findCommonRootDir([])).toBe('');
     });
 
     it('returns the path for one path', () => {
       const file = 'path/to/a/file.txt';
-      expect(Source.findCommonRootDir([file])).toBe(file);
+      expect(Source._findCommonRootDir([file])).toBe(file);
     });
 
     it('works for normal paths', () => {
@@ -168,7 +168,7 @@ describe('Source', () => {
         'path/to/another/cool/file.txt',
         'path/to/a/folder'
       ];
-      expect(Source.findCommonRootDir(paths)).toBe('path/to');
+      expect(Source._findCommonRootDir(paths)).toBe('path/to');
     });
 
     it('works for different length paths', () => {
@@ -177,7 +177,7 @@ describe('Source', () => {
         'path/to/another/cool/file.txt',
         'path'
       ];
-      expect(Source.findCommonRootDir(paths)).toBe('path');
+      expect(Source._findCommonRootDir(paths)).toBe('path');
     });
 
     it('works for no common roots', () => {
@@ -185,7 +185,7 @@ describe('Source', () => {
         'path/to/a/file.txt',
         'another/path'
       ];
-      expect(Source.findCommonRootDir(paths)).toBe('');
+      expect(Source._findCommonRootDir(paths)).toBe('');
     });
 
     it('works on paths ending with "/"', () => {
@@ -194,24 +194,24 @@ describe('Source', () => {
         'path/to/something',
         'path/to/'
       ];
-      expect(Source.findCommonRootDir(paths)).toBe('path/to');
+      expect(Source._findCommonRootDir(paths)).toBe('path/to');
     });
   });
 
-  describe('::removeRootDirFromPath()', () => {
+  describe('::_removeRootDirFromPath()', () => {
     it('does not do anything to non-matching paths', () => {
       const path = 'path/to/a/file.txt';
-      expect(Source.removeRootDirFromPath(path, 'root/dir')).toBe(path);
+      expect(Source._removeRootDirFromPath(path, 'root/dir')).toBe(path);
     });
 
     it('works', () => {
       const path = 'path/to/a/file.txt';
-      expect(Source.removeRootDirFromPath(path, 'path/to')).toBe('a/file.txt');
+      expect(Source._removeRootDirFromPath(path, 'path/to')).toBe('a/file.txt');
     });
 
     it('works with root path ending with "/"', () => {
       const path = 'path/to/a/file.txt';
-      expect(Source.removeRootDirFromPath(path, 'path/to/')).toBe('a/file.txt');
+      expect(Source._removeRootDirFromPath(path, 'path/to/')).toBe('a/file.txt');
     });
   });
 });
