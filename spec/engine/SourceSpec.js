@@ -58,7 +58,7 @@ describe('Source', () => {
           'Folder1/Folder2/file5.txt',
           'Folder1/Folder2/Folder3/file6.txt'
         ]))
-        .catch(err => expect(err).toBeUndefined())
+        .catch(err => fail(err))
         .then(done);
     });
 
@@ -75,7 +75,7 @@ describe('Source', () => {
           'Photos/photo1.jpg',
           'Photos/Album/photo2.jpg'
         ]))
-        .catch(err => expect(err).toBeUndefined())
+        .catch(err => fail(err))
         .then(done);
     });
   });
@@ -104,10 +104,7 @@ describe('Source', () => {
         expect(data).toBe(contents);
         done();
       });
-      stream.on('error', (err) => {
-        expect(err).toBeUndefined();
-        done();
-      });
+      stream.on('error', err => fail(err));
     });
   });
 
@@ -126,7 +123,7 @@ describe('Source', () => {
       const source = new Source('Test Source', ['folder']);
       source.getFileChecksum('file.txt')
         .then(checksum => expect(checksum).toBe('2fd4e1c67a2d28fced849ee1bb76e7391b93eb12'))
-        .catch(err => expect(err).toBeUndefined())
+        .catch(err => fail(err))
         .then(done);
     });
 

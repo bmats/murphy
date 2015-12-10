@@ -65,35 +65,82 @@ describe('FilesystemArchive', () => {
 
   describe('.createVersion()', () => {
     const archivePath = 'archive';
-    beforeAll(() => {
-      MockFs({});
-      MockDate.set(new Date('2018-01-11T05:00:00'));
+
+    beforeEach(() => {
+      MockFs({
+        [archivePath + DIRSEP + 'Versions']: {}
+      });
+      MockDate.set(new Date(2018, 0, 11, 5, 0, 0));
     });
 
-    afterAll(() => {
+    afterEach(() => {
       MockFs.restore();
     });
 
-    it('returns a ArchiveVersion with the current time', (done) => {
+    it('returns a ArchiveVersion with the current date', (done) => {
       const archive = new FilesystemArchive('Test Archive', archivePath);
-      archive.init();
       archive.createVersion()
-        .then(fs.statSync(archivePath + DIRSEP + '2018-01-11 05-00-00'))
-        .catch(err => expect(err).toBeUndefined())
+        .then(version => {
+          expect(version).not.toBeUndefined();
+          expect(version.date).toEqual(new Date());
+        })
+        .catch(err => fail(err))
         .then(done);
     });
 
-    it('creates a folder', () => {
-      // TODO: impl
+    it('creates a folder', (done) => {
+      const archive = new FilesystemArchive('Test Archive', archivePath);
+      archive.createVersion()
+        .then(() => {
+          const stat = fs.statSync(archivePath + DIRSEP + 'Versions' + DIRSEP + '2018-01-11 05-00-00');
+          expect(stat.isDirectory()).toBe(true);
+        })
+        .catch(err => fail(err))
+        .then(done);
     });
 
-    it('errors if the folder already exists', () => {
-      // TODO: impl
+    it('fails when the folder already exists', (done) => {
+      MockFs({
+        [archivePath + DIRSEP + 'Versions' + DIRSEP + '2018-01-11 05-00-00']: {}
+      });
+      const archive = new FilesystemArchive('Test Archive', archivePath);
+      archive.createVersion()
+        .then(version => fail('Expected error'))
+        .catch(err => expect(err).not.toBeUndefined())
+        .then(done);
     });
   });
 
   describe('.getVersions()', () => {
-    // TODO: add specs
+    const folderNames = [
+      '2018-01-11 05-00-00', // descending date order
+      '2017-03-04 12-34-56',
+      '2016-01-02 11-22-33',
+      '2015-12-05 01-20-33'
+    ];
+
+    // Create a map with each folder as key and {} as value
+    const folders = folderNames.reduce((map, file) => {
+      map[file] = {};
+      return map;
+    }, {});
+
+    beforeEach(() => {
+      MockFs({
+        'archive/Versions': folders
+      });
+    });
+
+    it('lists archive folders', (done) => {
+      const archive = new FilesystemArchive('Test Archive', 'archive');
+      archive.getVersions()
+        .then(versions => {
+          const dates = versions.map(v => v.folderName);
+          expect(dates).toEqual(folderNames);
+        })
+        .catch(err => fail(err))
+        .then(done);
+    });
   });
 
   describe('.serialize() and .unserialize()', () => {

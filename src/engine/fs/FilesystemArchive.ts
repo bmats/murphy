@@ -8,6 +8,7 @@ import FilesystemArchiveVersion from './FilesystemArchiveVersion';
 
 const mkdirPromise = Bluebird.promisify(fs.mkdir);
 const writeFilePromise = Bluebird.promisify(fs.writeFile);
+const readdirPromise = Bluebird.promisify(fs.readdir);
 
 const README_FILENAME: string = 'READ ME.txt';
 const LATEST_FOLDER: string = 'Latest';
@@ -92,24 +93,48 @@ export default class FilesystemArchive extends Archive {
   }
 
   createVersion(): Promise<ArchiveVersion> {
-    return new Promise((resolve: (version: ArchiveVersion) => void, reject: (err) => void) => {
-      const now: Date = new Date();
-      const folderName: string = FilesystemArchive.formatDate(now);
+    const now: Date = new Date();
+    const version: FilesystemArchiveVersion = new FilesystemArchiveVersion(now);
+    const folderPath: string = this.path + DIRSEP + VERSIONS_FOLDER + DIRSEP + version.folderName;
 
+    return new Promise<void>((resolve, reject) => {
       // Make sure folder does not exist
-      checkPathDoesNotExist(this.path + DIRSEP + folderName)
+      checkPathDoesNotExist(folderPath)
+        .then(resolve)
         .catch((err) => {
-          winston.error('Filesystem archive version folder already exists', { path: this.path + DIRSEP + folderName });
-          reject(new Error(`Archive version ${folderName} already exists`));
+          winston.error('Filesystem archive version folder already exists', { path: folderPath });
+          reject(new Error(`Archive version ${version.folderName} already exists`));
         });
-
-      // TODO: continue impl
-    });
+    }).then(() => new Promise<void>((resolve, reject) => {
+      // Create folder
+      mkdirPromise(folderPath)
+        .then(resolve)
+        .catch((err) => {
+          winston.error('Error creating archive version folder', { path: folderPath, error: err });
+          reject(new Error(`Error creating archive version at ${folderPath}`));
+        });
+    })).then(() => version);
   }
 
   getVersions(): Promise<ArchiveVersion[]> {
-    return new Promise((resolve: (versions: ArchiveVersion[]) => void, reject: (err) => void) => {
-      // TODO: implement
+    return new Promise((resolve, reject) => {
+      readdirPromise(this.path + DIRSEP + VERSIONS_FOLDER)
+        .then(files => {
+          let versions: FilesystemArchiveVersion[] = [];
+          files.forEach(folder => {
+            const version = FilesystemArchiveVersion.fromFolderName(folder);
+            if (version) {
+              versions.push(version);
+            }
+          });
+
+          versions.sort((a, b) => b.date.getTime() - a.date.getTime()); // descending date order
+          resolve(versions);
+        })
+        .catch(err => {
+          winston.error('Error listing archive versions', { path: this.path, error: err });
+          reject(new Error('Error finding versions'));
+        });
     });
   }
 
@@ -126,15 +151,5 @@ export default class FilesystemArchive extends Archive {
 
   static unserialize(data: any): FilesystemArchive {
     return new FilesystemArchive(data.name, data.path);
-  }
-
-  private static formatDate(date: Date) {
-    const year   = date.getFullYear();
-    const month  = (date.getMonth()   < 10 ? '0' : '') + date.getMonth();
-    const day    = (date.getDate()    < 10 ? '0' : '') + date.getDate();
-    const hour   = (date.getHours()   < 10 ? '0' : '') + date.getHours();
-    const minute = (date.getMinutes() < 10 ? '0' : '') + date.getMinutes();
-    const second = (date.getSeconds() < 10 ? '0' : '') + date.getSeconds();
-    return `${year}-${month}-${day} ${hour}-${minute}-${second}`;
   }
 }
