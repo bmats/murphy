@@ -10,41 +10,43 @@ export default class Config {
     return `${homeDir}/.murphyconfig.json`;
   }
 
-  static load(callback: (err: any, config: Config) => void): void {
-    const fileName: string = Config.fileName;
-    fs.stat(fileName, (err, stats: fs.Stats) => {
-      if (err) {
-        // File does not exist yet, so return empty config
-        winston.info('Config file does not exist yet');
-        callback(undefined, new Config());
-        return;
-      }
-
-      // Read existing file
-      fs.readFile(fileName, { encoding: 'utf8' }, (err: any, data: string) => {
+  static load(): Promise<Config> {
+    return new Promise<Config>((resolve, reject) => {
+      const fileName: string = Config.fileName;
+      fs.stat(fileName, (err, stats: fs.Stats) => {
         if (err) {
-          winston.error('Error reading config file', { error: err });
-          callback(err, undefined);
+          // File does not exist yet, so return empty config
+          winston.info('Config file does not exist yet');
+          resolve(new Config());
           return;
         }
 
-        try {
-          // Parse JSON
-          const json: any = JSON.parse(data);
-          if (!json.sources) {
-            winston.error('Invalid config file', { json: json });
-            callback('Invalid config file.', undefined);
+        // Read existing file
+        fs.readFile(fileName, { encoding: 'utf8' }, (err: any, data: string) => {
+          if (err) {
+            winston.error('Error reading config file', { error: err });
+            reject(err);
             return;
           }
 
-          let config = new Config();
-          config._sources = json.sources.map(s => Source.unserialize(s));
-          winston.info('Loaded config file');
-          callback(undefined, config);
-        } catch (e) {
-          winston.error('Error parsing config file', { data: data });
-          callback('Error reading config file.', undefined);
-        }
+          try {
+            // Parse JSON
+            const json: any = JSON.parse(data);
+            if (!json.sources) {
+              winston.error('Invalid config file', { json: json });
+              reject(new Error('Invalid config file.'));
+              return;
+            }
+
+            let config = new Config();
+            config._sources = json.sources.map(s => Source.unserialize(s));
+            winston.info('Loaded config file');
+            resolve(config);
+          } catch (e) {
+            winston.error('Error parsing config file', { data: data });
+            reject(new Error('Error reading config file.'));
+          }
+        });
       });
     });
   }

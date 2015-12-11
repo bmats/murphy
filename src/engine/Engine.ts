@@ -5,15 +5,8 @@ import RestoreJob from './RestoreJob';
 export default class Engine {
   private _config: Config;
 
-  constructor() {
-    Config.load((err, config: Config) => {
-      if (err) {
-        // TODO: handle
-        return;
-      }
-
-      this._config = config;
-    });
+  constructor(config: Config) {
+    this._config = config;
   }
 
   runBackup(job: BackupJob) {

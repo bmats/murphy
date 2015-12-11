@@ -15,11 +15,10 @@ describe('Config', () => {
 
   describe('::load()', () => {
     it('works without a config file', (done) => {
-      Config.load((err, config) => {
-        expect(err).toBeUndefined();
-        expect(config.sources.length).toBe(0);
-        done();
-      });
+      Config.load()
+        .then(config => expect(config.sources.length).toBe(0))
+        .catch(err => fail(err))
+        .then(done);
     });
 
     it('correctly loads a config file', (done) => {
@@ -39,18 +38,19 @@ describe('Config', () => {
         [Config.fileName]: JSON.stringify(data)
       });
 
-      Config.load((err, config) => {
-        expect(err).toBeUndefined();
-        expect(config).not.toBeUndefined();
-        expect(config.sources.length).toBe(data.sources.length);
+      Config.load()
+        .then(config => {
+          expect(config).not.toBeUndefined();
+          expect(config.sources.length).toBe(data.sources.length);
 
-        config.sources.forEach((source, i) => {
-          expect(source).toEqual(jasmine.any(Source));
-          expect(source.name).toBe(data.sources[i].name);
-          expect(source.paths).toEqual(data.sources[i].paths);
-        });
-        done();
-      });
+          config.sources.forEach((source, i) => {
+            expect(source).toEqual(jasmine.any(Source));
+            expect(source.name).toBe(data.sources[i].name);
+            expect(source.paths).toEqual(data.sources[i].paths);
+          });
+        })
+        .catch(err => fail(err))
+        .then(done);
     });
 
     it('fails with invalid data', (done) => {
@@ -58,11 +58,10 @@ describe('Config', () => {
         [Config.fileName]: 'invalid JSON goes here'
       });
 
-      Config.load((err, config) => {
-        expect(err).not.toBeUndefined();
-        expect(config).toBeUndefined();
-        done();
-      });
+      Config.load()
+        .then(config => fail('Expected error'))
+        .catch(err => expect(err).not.toBeUndefined())
+        .then(done);
     });
   });
 
