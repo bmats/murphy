@@ -81,7 +81,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
         .then(resolve)
         .catch(err => {
           winston.error('Error loading archive version index file', { version: this.folderPath, error: err });
-          reject(new Error(`Error loading archive version ${this.folderName} index`));
+          reject(new Error(`Error loading archive version "${this.folderName}" index`));
         });
     });
   }
@@ -203,19 +203,6 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
       return new FilesystemArchiveVersion(date, archivePath);
     }
     return null;
-  }
-
-  static parseIndexFile(path: string): Promise<{ [file: string]: string }> {
-    return new Promise((resolve, reject) => {
-      readFilePromise(path)
-        .then((buffer: Buffer) => {
-          // TODO: implement
-        })
-        .catch(err => {
-          winston.error('Error reading archive version index file', { path: path, error: err });
-          reject(new Error('Error reading archive version'));
-        })
-    });
   }
 
   private static formatDate(date: Date) {

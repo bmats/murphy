@@ -48,18 +48,74 @@ describe('FilesystemArchive', () => {
       expect(versions.isDirectory()).toBe(true);
     });
 
-    it('fails when the folder exists', () => {
+    it('fails when the folder exists', (done) => {
       const existingFolder = 'Existing';
       fs.mkdirSync(existingFolder);
       const archive = new FilesystemArchive('Test Archive', existingFolder);
       archive.init()
         .then(() => fail('Expected error'))
-        .catch((err) => expect(err).not.toBeUndefined());
+        .catch((err) => expect(err).not.toBeUndefined())
+        .then(done);
     });
   });
 
   describe('.rebuild()', () => {
-    // TODO: add specs
+    beforeEach(() => {
+      MockFs({
+        Archive: {
+          Latest: {},
+          Versions: {
+            '2000-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  folder/file1.txt: add\n  folder/file2.txt: add\n  folder/file3.txt: add\n',
+              folder: {
+                'file1.txt': 'file1 2000',
+                'file2.txt': 'file2 2000',
+                'file3.txt': 'file3 2000'
+              }
+            },
+            '2001-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  folder/file2.txt: modify\n  folder/file3.txt: delete\n  folder/file4.txt: add\n',
+              folder: {
+                'file2.txt': 'file2 2001',
+                'file4.txt': 'file4 2001'
+              }
+            },
+            '2002-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  folder/file2.txt: modify\n  folder/file3.txt: add\n',
+              folder: {
+                'file2.txt': 'file2 2002',
+                'file3.txt': 'file3 2002'
+              }
+            }
+          }
+        }
+      });
+    });
+
+    afterEach(() => {
+      MockFs.restore();
+    });
+
+    it('builds the latest folder', (done) => {
+      const archive = new FilesystemArchive('Test Archive', 'Archive');
+      archive.rebuild()
+        .then(() => {
+          expect(fs.lstatSync('Archive/Latest/folder/file1.txt').isSymbolicLink()).toBe(true);
+          expect(fs.readlinkSync('Archive/Latest/folder/file1.txt'))
+            .toBe('Archive/Versions/2000-01-01 00-00-00/folder/file1.txt');
+          expect(fs.lstatSync('Archive/Latest/folder/file2.txt').isSymbolicLink()).toBe(true);
+          expect(fs.readlinkSync('Archive/Latest/folder/file2.txt'))
+            .toBe('Archive/Versions/2002-01-01 00-00-00/folder/file2.txt');
+          expect(fs.lstatSync('Archive/Latest/folder/file3.txt').isSymbolicLink()).toBe(true);
+          expect(fs.readlinkSync('Archive/Latest/folder/file3.txt'))
+            .toBe('Archive/Versions/2002-01-01 00-00-00/folder/file3.txt');
+          expect(fs.lstatSync('Archive/Latest/folder/file4.txt').isSymbolicLink()).toBe(true);
+          expect(fs.readlinkSync('Archive/Latest/folder/file4.txt'))
+            .toBe('Archive/Versions/2001-01-01 00-00-00/folder/file4.txt');
+        })
+        .catch(err => fail(err))
+        .then(done);
+    });
   });
 
   describe('.createVersion()', () => {
@@ -97,9 +153,11 @@ describe('FilesystemArchive', () => {
       '2015-12-05 01-20-33'
     ];
 
-    // Create a map with each folder as key and {} as value
+    // Create a map with each folder and an index file inside
     const folders: any = folderNames.reduce((map, file) => {
-      map[file] = {};
+      map[file] = {
+        '.index': 'source: My Computer\nindex:\n'
+      };
       return map;
     }, {});
 
@@ -119,6 +177,12 @@ describe('FilesystemArchive', () => {
         .then(versions => {
           const dates = versions.map(v => v.folderName);
           expect(dates).toEqual(folderNames);
+
+          // Check that each version is loaded by getting its files
+          return Promise.all(versions.map(version =>
+            version.getFiles()
+              .then(files => expect(files).toBeTruthy())
+          ));
         })
         .catch(err => fail(err))
         .then(done);

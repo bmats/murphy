@@ -31,7 +31,7 @@ abstract class Archive {
   abstract createVersion(): Promise<ArchiveVersion>;
 
   /**
-   * List the versions contained in the archive.
+   * List the versions contained in the archive in sorted by newest first.
    */
   abstract getVersions(): Promise<ArchiveVersion[]>;
 

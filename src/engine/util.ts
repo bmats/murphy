@@ -33,4 +33,5 @@ export const mkdirPromise = Bluebird.promisify(fs.mkdir);
 export const mkdirpPromise = Bluebird.promisify(mkdirp);
 export const readdirPromise = Bluebird.promisify(fs.readdir);
 export const readFilePromise = Bluebird.promisify(fs.readFile);
+export const symlinkPromise = Bluebird.promisify(fs.symlink);
 export const writeFilePromise = Bluebird.promisify(fs.writeFile);
