@@ -76,7 +76,7 @@ export default class Source {
           }
 
           // Normalize path to end with '/' for concat below
-          if (!path.endsWith(DIRSEP)) path += DIRSEP;
+          if (path.charAt(path.length - 1) !== DIRSEP) path += DIRSEP;
 
           async.each(files.map(file => path + file), checkFile, callback);
         });
@@ -97,12 +97,12 @@ export default class Source {
 
   createReadStream(file: string): stream.Readable {
     let root = this._rootDir;
-    if (this._rootDir.length > 0 && !this._rootDir.endsWith(DIRSEP)) root += DIRSEP;
+    if (this._rootDir.length > 0 && this._rootDir.charAt(this._rootDir.length - 1) !== DIRSEP) root += DIRSEP;
     return fs.createReadStream(root + file);
   }
 
   getFileChecksum(file: string): Promise<string> {
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       const fileStream: stream.Readable = this.createReadStream(file);
 
       fileStream.on('open', () => {

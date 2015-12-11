@@ -145,7 +145,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
   }
 
   getFileChecksum(file: string): Promise<string> {
-    return new Promise((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
       const stream: stream.Readable = this.createReadStream(file);
       if (!stream)
         reject(new Error('File not in archive'));

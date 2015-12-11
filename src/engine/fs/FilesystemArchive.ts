@@ -33,7 +33,7 @@ To restore the latest version without Murphy:\r
 
 export default class FilesystemArchive extends Archive {
   private _path: string;
-  private _versionCache: ArchiveVersion[] = null;
+  private _versionCache: FilesystemArchiveVersion[] = null;
 
   constructor(name: string, path: string) {
     super(name, 'FilesystemArchive');
@@ -140,7 +140,7 @@ export default class FilesystemArchive extends Archive {
     // Use already loaded versions if possible
     if (this._versionCache) return Promise.resolve(this._versionCache);
 
-    return new Promise((resolve, reject) => {
+    return new Promise<FilesystemArchiveVersion[]>((resolve, reject) => {
       let versions: FilesystemArchiveVersion[] = [];
       readdirPromise(this.path + DIRSEP + VERSIONS_FOLDER)
         .then(files => {
