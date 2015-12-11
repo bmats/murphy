@@ -28,8 +28,8 @@ describe('Source', () => {
       '/Documents/Folder1/file4.txt',
       '/Documents/Folder1/Folder2/file5.txt',
       '/Documents/Folder1/Folder2/Folder3/file6.txt',
-      '/Photos/photo1.jpg',
-      '/Photos/Album/photo2.jpg',
+      '/Pictures/photo1.jpg',
+      '/Pictures/Album/photo2.jpg',
       '/Videos/cats.mp4'
     ];
 
@@ -63,7 +63,7 @@ describe('Source', () => {
     });
 
     it('enumerates multiple folders correctly', (done) => {
-      const source = new Source('Test Source', ['/Documents', '/Photos']);
+      const source = new Source('Test Source', ['/Documents', '/Pictures']);
       source.getFiles()
         .then(result => expect(result).toEqualInAnyOrder([
           'Documents/file1.txt',
@@ -72,8 +72,8 @@ describe('Source', () => {
           'Documents/Folder1/file4.txt',
           'Documents/Folder1/Folder2/file5.txt',
           'Documents/Folder1/Folder2/Folder3/file6.txt',
-          'Photos/photo1.jpg',
-          'Photos/Album/photo2.jpg'
+          'Pictures/photo1.jpg',
+          'Pictures/Album/photo2.jpg'
         ]))
         .catch(err => fail(err))
         .then(done);
@@ -127,18 +127,18 @@ describe('Source', () => {
         .then(done);
     });
 
-    it('errors with folder', (done) => {
+    it('fails with folder', (done) => {
       const source = new Source('Test Source', []);
       source.getFileChecksum('folder')
-        .then(checksum => expect(checksum).toBeUndefined())
+        .then(checksum => fail('Expected error'))
         .catch(err => expect(err).not.toBeUndefined())
         .then(done);
     });
 
-    it('errors with invalid file', (done) => {
+    it('fails with invalid file', (done) => {
       const source = new Source('Test Source', []);
       source.getFileChecksum('invalid/file.txt')
-        .then(checksum => expect(checksum).toBeUndefined())
+        .then(checksum => fail('Expected error'))
         .catch(err => expect(err).not.toBeUndefined())
         .then(done);
     });

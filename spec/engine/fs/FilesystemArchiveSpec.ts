@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import {sep as DIRSEP} from 'path';
 import * as MockFs from 'mock-fs';
 import * as MockDate from 'mockdate';
 import Archive from '../../../src/engine/Archive';
@@ -17,7 +16,7 @@ describe('FilesystemArchive', () => {
   });
 
   describe('.init()', () => {
-    const archivePath = 'archive';
+    const archivePath = 'Archive';
     beforeAll((done) => {
       MockFs({});
       const archive = new FilesystemArchive('Test Archive', archivePath);
@@ -35,22 +34,22 @@ describe('FilesystemArchive', () => {
     });
 
     it('creates a readme', () => {
-      const readme = fs.statSync(archivePath + DIRSEP + 'READ ME.txt');
+      const readme = fs.statSync(archivePath + '/READ ME.txt');
       expect(readme.isFile()).toBe(true);
-      const content = fs.readFileSync(archivePath + DIRSEP + 'READ ME.txt');
+      const content = fs.readFileSync(archivePath + '/READ ME.txt');
       expect(readme.size).toBeGreaterThan(0);
     });
 
     it('creates archive folders', () => {
-      const latest = fs.statSync(archivePath + DIRSEP + 'Latest');
+      const latest = fs.statSync(archivePath + '/Latest');
       expect(latest.isDirectory()).toBe(true);
 
-      const versions = fs.statSync(archivePath + DIRSEP + 'Versions');
+      const versions = fs.statSync(archivePath + '/Versions');
       expect(versions.isDirectory()).toBe(true);
     });
 
     it('fails when the folder exists', () => {
-      const existingFolder = 'existing';
+      const existingFolder = 'Existing';
       fs.mkdirSync(existingFolder);
       const archive = new FilesystemArchive('Test Archive', existingFolder);
       archive.init()
@@ -64,17 +63,18 @@ describe('FilesystemArchive', () => {
   });
 
   describe('.createVersion()', () => {
-    const archivePath = 'archive';
+    const archivePath = 'Archive';
 
     beforeEach(() => {
       MockFs({
-        [archivePath + DIRSEP + 'Versions']: {}
+        [archivePath + '/Versions']: {}
       });
       MockDate.set(new Date(2018, 0, 11, 5, 0, 0));
     });
 
     afterEach(() => {
       MockFs.restore();
+      MockDate.reset();
     });
 
     it('returns a ArchiveVersion with the current date', (done) => {
@@ -85,28 +85,6 @@ describe('FilesystemArchive', () => {
           expect(version.date).toEqual(new Date());
         })
         .catch(err => fail(err))
-        .then(done);
-    });
-
-    it('creates a folder', (done) => {
-      const archive = new FilesystemArchive('Test Archive', archivePath);
-      archive.createVersion()
-        .then(() => {
-          const stat = fs.statSync(archivePath + DIRSEP + 'Versions' + DIRSEP + '2018-01-11 05-00-00');
-          expect(stat.isDirectory()).toBe(true);
-        })
-        .catch(err => fail(err))
-        .then(done);
-    });
-
-    it('fails when the folder already exists', (done) => {
-      MockFs({
-        [archivePath + DIRSEP + 'Versions' + DIRSEP + '2018-01-11 05-00-00']: {}
-      });
-      const archive = new FilesystemArchive('Test Archive', archivePath);
-      archive.createVersion()
-        .then(version => fail('Expected error'))
-        .catch(err => expect(err).not.toBeUndefined())
         .then(done);
     });
   });
@@ -127,12 +105,16 @@ describe('FilesystemArchive', () => {
 
     beforeEach(() => {
       MockFs({
-        'archive/Versions': folders
+        'Archive/Versions': folders
       });
     });
 
+    afterEach(() => {
+      MockFs.restore();
+    });
+
     it('lists archive folders', (done) => {
-      const archive = new FilesystemArchive('Test Archive', 'archive');
+      const archive = new FilesystemArchive('Test Archive', 'Archive');
       archive.getVersions()
         .then(versions => {
           const dates = versions.map(v => v.folderName);

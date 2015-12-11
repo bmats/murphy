@@ -4,6 +4,7 @@ import * as crypto from 'crypto';
 import {sep as DIRSEP} from 'path';
 import * as stream from 'stream';
 import * as winston from 'winston';
+import {hashStream} from './util';
 
 export default class Source {
   private _name: string;
@@ -97,27 +98,25 @@ export default class Source {
   createReadStream(file: string): stream.Readable {
     let root = this._rootDir;
     if (this._rootDir.length > 0 && !this._rootDir.endsWith(DIRSEP)) root += DIRSEP;
-    file = root + file;
-    return fs.createReadStream(file);
+    return fs.createReadStream(root + file);
   }
 
   getFileChecksum(file: string): Promise<string> {
-    return new Promise((resolve: (checksum: string) => void, reject: (err) => any) => {
-      let fileStream: stream.Readable = this.createReadStream(file);
+    return new Promise((resolve, reject) => {
+      const fileStream: stream.Readable = this.createReadStream(file);
 
-      let hash: stream.Duplex = crypto.createHash('sha1');
-      hash.setEncoding('hex');
-
-      fileStream.on('end', () => {
-        hash.end();
-        resolve(hash.read().toString());
+      fileStream.on('open', () => {
+        hashStream(fileStream)
+          .then(resolve)
+          .catch(err => {
+            winston.error('Source file hashing error', { file: file, error: err });
+            reject(err);
+          });
       });
       fileStream.on('error', err => {
-        winston.error('Hashing error', { file: file, error: err });
+        winston.error('Error opening source file', { file: file, error: err });
         reject(err);
-      })
-
-      fileStream.pipe(hash);
+      });
     });
   }
 

@@ -10,11 +10,11 @@ export default class DummyArchiveVersion extends ArchiveVersion {
     return null;
   }
 
-  getFileStatus(): string {
+  getFileStatus(file: string): Promise<string> {
     return null;
   }
 
-  writeFileStream(file: string, status: string, stream?: stream.Readable): Promise<void> {
+  writeFile(file: string, status: string, stream?: stream.Readable): Promise<void> {
     return null;
   }
 
