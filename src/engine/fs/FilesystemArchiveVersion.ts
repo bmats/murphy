@@ -5,7 +5,7 @@ import {sep as DIRSEP} from 'path';
 import * as winston from 'winston';
 import * as yaml from 'js-yaml';
 import ArchiveVersion from '../ArchiveVersion';
-import {checkPathDoesNotExist, hashStream, mkdirPromise, mkdirpPromise, readFilePromise, writeFilePromise} from '../util';
+import {checkPathDoesNotExist, hashStream, mkdirAsync, mkdirpAsync, readFileAsync, writeFileAsync} from '../util';
 
 const FOLDER_NAME_REGEX = /(\d{4})-(\d{2})-(\d{2}) (\d{2})-(\d{2})-(\d{2})/;
 const VERSIONS_FOLDER: string = 'Versions';
@@ -56,7 +56,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
         });
     }).then(() => new Promise<void>((resolve, reject) => {
       // Create folder and index
-      mkdirPromise(this.folderPath)
+      mkdirAsync(this.folderPath)
         .then(this.apply.bind(this)) // write properties to file
         .then(resolve)
         .catch((err) => {
@@ -71,7 +71,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
    */
   load(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      readFilePromise(this.folderPath + DIRSEP + INDEX_FILE, { encoding: 'utf8' })
+      readFileAsync(this.folderPath + DIRSEP + INDEX_FILE, { encoding: 'utf8' })
         .then(contents => {
           const parsed = yaml.safeLoad(contents);
           this._source = parsed.source;
@@ -109,7 +109,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
 
       const filePath = this.folderPath + DIRSEP + file;
       return Promise.all([
-        mkdirpPromise(path.dirname(filePath)),
+        mkdirpAsync(path.dirname(filePath)),
         checkPathDoesNotExist(filePath)
           .catch(err => winston.warn('File passed to writeFileStream already exists', { file: filePath }))
       ])
@@ -172,7 +172,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
         files: this._index
       });
 
-      writeFilePromise(this.folderPath + DIRSEP + INDEX_FILE, data)
+      writeFileAsync(this.folderPath + DIRSEP + INDEX_FILE, data)
         .then(resolve)
         .catch(err => {
           winston.error('Error persisting archive version to file', { version: this.folderPath, error: err });

@@ -19,13 +19,13 @@ abstract class ArchiveVersion {
   abstract getFiles(): Promise<string[]>;
 
   /**
-   * Get the status ("new", "modified", "deleted") of a file in this version.
+   * Get the status ("add", "modify", "delete") of a file in this version.
    */
   abstract getFileStatus(file: string): Promise<string>;
 
   /**
    * Write a stream to a file in the version and save the file status.
-   * If the status is "deleted", the stream can be omitted.
+   * If the status is "delete", the stream can be omitted.
    */
   abstract writeFile(file: string, status: string, stream?: stream.Readable): Promise<void>;
 

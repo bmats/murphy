@@ -4,7 +4,7 @@ import * as winston from 'winston';
 import Archive from '../Archive';
 import ArchiveVersion from '../ArchiveVersion';
 import FilesystemArchiveVersion from './FilesystemArchiveVersion';
-import {checkPathDoesNotExist, mkdirPromise, mkdirpPromise, readdirPromise, symlinkPromise, writeFilePromise} from '../util';
+import {checkPathDoesNotExist, mkdirAsync, mkdirpAsync, readdirAsync, symlinkAsync, writeFileAsync} from '../util';
 
 const DIRSEP = path.sep;
 const README_FILENAME: string = 'READ ME.txt';
@@ -56,7 +56,7 @@ export default class FilesystemArchive extends Archive {
         });
     }).then(() => new Promise<void>((resolve, reject) => {
       // Make folder
-      mkdirPromise(this.path)
+      mkdirAsync(this.path)
         .then(resolve)
         .catch((err) => {
           winston.error('Error making archive folder', { path: this.path, error: err });
@@ -64,9 +64,9 @@ export default class FilesystemArchive extends Archive {
         });
     })).then(() => new Promise<void>((resolve, reject) => {
       // Make archive structure
-      writeFilePromise(this.path + DIRSEP + README_FILENAME, this.getReadMeText())
-        .then(mkdirPromise(this.path + DIRSEP + LATEST_FOLDER))
-        .then(mkdirPromise(this.path + DIRSEP + VERSIONS_FOLDER))
+      writeFileAsync(this.path + DIRSEP + README_FILENAME, this.getReadMeText())
+        .then(mkdirAsync(this.path + DIRSEP + LATEST_FOLDER))
+        .then(mkdirAsync(this.path + DIRSEP + VERSIONS_FOLDER))
         .then(resolve)
         .catch((err) => {
           winston.error('Error building archive', { error: err });
@@ -112,8 +112,8 @@ export default class FilesystemArchive extends Archive {
               case 'modify':
                 // Write the symlink for added/modified files
                 const symlinkPath: string = this.path + DIRSEP + LATEST_FOLDER + DIRSEP + file;
-                return mkdirpPromise(path.dirname(symlinkPath))
-                  .then(symlinkPromise(
+                return mkdirpAsync(path.dirname(symlinkPath))
+                  .then(symlinkAsync(
                     this.path + DIRSEP + VERSIONS_FOLDER + DIRSEP + version.folderName + DIRSEP + file,
                     symlinkPath));
               case 'delete':
@@ -142,7 +142,7 @@ export default class FilesystemArchive extends Archive {
 
     return new Promise<FilesystemArchiveVersion[]>((resolve, reject) => {
       let versions: FilesystemArchiveVersion[] = [];
-      readdirPromise(this.path + DIRSEP + VERSIONS_FOLDER)
+      readdirAsync(this.path + DIRSEP + VERSIONS_FOLDER)
         .then(files => {
           // Create all the versions
           files.forEach(folder => {
