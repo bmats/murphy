@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as Promise from 'bluebird';
 import * as winston from 'winston';
 import Archive from '../Archive';
 import ArchiveVersion from '../ArchiveVersion';
@@ -84,10 +85,10 @@ export default class FilesystemArchive extends Archive {
     let versionFiles: string[][] = [];
 
     return this.getVersions()
-      .then(ver => versions = ver)
+      .then(ver => { versions = ver })
       .then(() =>
         // Get the files for each version
-        Promise.all(versions.map((version, i) =>
+        Promise.map(versions, ((version, i) =>
           version.getFiles()
             .then(files => versionFiles[i] = files)
         ))
@@ -131,7 +132,7 @@ export default class FilesystemArchive extends Archive {
     const version = new FilesystemArchiveVersion(new Date(), this.path);
     return version.init()
       .then(() => {
-        if (this._versionCache) this._versionCache.push(version);
+        if (this._versionCache) this._versionCache.unshift(version);
         return version;
       });
   }

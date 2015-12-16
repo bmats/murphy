@@ -66,15 +66,16 @@ describe('FilesystemArchive', () => {
           Latest: {},
           Versions: {
             '2000-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  folder/file1.txt: add\n  folder/file2.txt: add\n  folder/file3.txt: add\n',
+              '.index': 'source: My Computer\nfiles:\n  folder/file1.txt: add\n  folder/file2.txt: add\n  folder/file3.txt: add\n  folder/file5.txt: add\n',
               folder: {
                 'file1.txt': 'file1 2000',
                 'file2.txt': 'file2 2000',
-                'file3.txt': 'file3 2000'
+                'file3.txt': 'file3 2000',
+                'file5.txt': 'file5 2000'
               }
             },
             '2001-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  folder/file2.txt: modify\n  folder/file3.txt: delete\n  folder/file4.txt: add\n',
+              '.index': 'source: My Computer\nfiles:\n  folder/file2.txt: modify\n  folder/file3.txt: delete\n  folder/file4.txt: add\n  folder/file5.txt: delete',
               folder: {
                 'file2.txt': 'file2 2001',
                 'file4.txt': 'file4 2001'
@@ -112,6 +113,7 @@ describe('FilesystemArchive', () => {
           expect(fs.lstatSync('Archive/Latest/folder/file4.txt').isSymbolicLink()).toBe(true);
           expect(fs.readlinkSync('Archive/Latest/folder/file4.txt'))
             .toBe('Archive/Versions/2001-01-01 00-00-00/folder/file4.txt');
+          expect(() => fs.lstatSync('Archive/Latest/folder/file5.txt')).toThrow(); // does not exist
         })
         .catch(err => fail(err))
         .then(done);
@@ -140,6 +142,29 @@ describe('FilesystemArchive', () => {
           expect(version).not.toBeUndefined();
           expect(version.date).toEqual(new Date());
         })
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('creates a version which is returned in getVersions()', (done) => {
+      const archive = new FilesystemArchive('Test Archive', archivePath);
+      let newVersion: FilesystemArchiveVersion;
+      archive.createVersion()
+        .then(version => { newVersion = version })
+        .then(archive.getVersions.bind(archive))
+        .then(versions => expect(versions).toContain(newVersion))
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('adds created version to ArchiveVersion cache', (done) => {
+      const archive = new FilesystemArchive('Test Archive', archivePath);
+      let newVersion: FilesystemArchiveVersion;
+      archive.getVersions() // cache initial versions
+      .then(archive.createVersion.bind(archive))
+        .then(version => { newVersion = version })
+        .then(archive.getVersions.bind(archive))
+        .then(versions => expect(versions[0]).toBe(newVersion))
         .catch(err => fail(err))
         .then(done);
     });

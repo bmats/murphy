@@ -132,6 +132,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
       }));
 
     case 'delete':
+      // TODO: write empty file or "{filename}.deleted"?
       return Promise.resolve();
     }
   }
