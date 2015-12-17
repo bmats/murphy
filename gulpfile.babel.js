@@ -19,11 +19,10 @@ function logError(err) {
 gulp.task('typescript', () => {
   return gulp.src(paths.typescript)
     .pipe($.typescript({
-      target: 'es5', // TODO: es6 doesn't work
+      target: 'es5',
       module: 'commonjs',
       jsx: 'react'
     })) // errors are logged
-    .pipe($.babel().on('error', logError))
     .pipe(gulp.dest(paths.build + '/src'))
     .pipe($.livereload());
 });
@@ -60,18 +59,17 @@ gulp.task('watch', ['build'], () => {
   restart();
 });
 
-gulp.task('typescript-test', () => {
+gulp.task('test-typescript', () => {
   return gulp.src(paths.spec)
     .pipe($.typescript({
-      target: 'es5', // TODO: es6 doesn't work
+      target: 'es5',
       module: 'commonjs',
       jsx: 'react'
     })) // errors are logged
-    .pipe($.babel().on('error', logError))
     .pipe(gulp.dest(paths.build + '/spec'));
 });
 
-gulp.task('test', ['typescript', 'typescript-test'], () => {
+gulp.task('test', ['typescript', 'test-typescript'], () => {
   var jasmine = new Jasmine();
   jasmine.loadConfigFile('spec/support/jasmine.json');
   jasmine.execute();
