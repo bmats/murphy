@@ -12,10 +12,10 @@ export = {
   spacing: Spacing,
   fontFamily: 'Roboto, sans-serif',
   palette: {
-    primary1Color: Colors.green500,
-    primary2Color: Colors.green700,
+    primary1Color: Colors.lightGreen500,
+    primary2Color: Colors.lightGreen700,
     primary3Color: Colors.grey400,
-    accent1Color: Colors.orange500,
+    accent1Color: Colors.green500,
     accent2Color: Colors.grey100,
     accent3Color: Colors.grey500,
     textColor: Colors.darkBlack,

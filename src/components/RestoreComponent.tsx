@@ -20,8 +20,7 @@ export default class RestoreComponent extends React.Component<Props, State> {
   render() {
     return (
       <div>
-        <div>Restore goes gere</div>
-        <MUI.RaisedButton label="Hiya" primary={true} />
+        <MUI.RaisedButton label="Implement" primary={true} />
       </div>
     );
   }

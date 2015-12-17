@@ -34,7 +34,7 @@ export default class VerticalSeparator extends React.Component<Props, {}> {
         top: this.props.verticalMargin,
         left: this.props.width / 2,
         bottom: this.props.verticalMargin,
-        borderLeft: `2px solid ${this.props.color}`
+        borderLeft: `1px solid ${this.props.color}`
       },
       icon: {
         display: this.props.direction ? 'block' : 'none',
