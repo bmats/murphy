@@ -2,6 +2,7 @@ import * as Promise from 'bluebird';
 import * as winston from 'winston';
 import Archive from './Archive';
 import ArchiveVersion from './ArchiveVersion';
+import Progress from './Progress';
 import Source from './Source';
 
 interface ProgressCallback {
@@ -17,6 +18,7 @@ function verifyChecksums(file: string, checksums: string[]): Promise<void> {
 abstract class Job {
   private _callback: ProgressCallback;
   private _stop: boolean;
+  private _lastMessage: string = '';
 
   constructor(callback?: ProgressCallback) {
     this._callback = callback;
@@ -26,9 +28,11 @@ abstract class Job {
     return this._stop;
   }
 
-  updateStatus(progress: number, message: string): void {
+  updateStatus(progress: number, message?: string): void {
+    if (message) this._lastMessage = message;
+
     if (this._callback)
-      this._callback(progress, message);
+      this._callback(progress, this._lastMessage);
   }
 
   abort() {
@@ -45,11 +49,21 @@ class BackupJob extends Job {
 
   private _source: Source;
   private _destination: Archive;
+  private _progress: Progress;
 
   constructor(source: Source, destination: Archive, callback?: ProgressCallback) {
     super(callback);
     this._source = source;
     this._destination = destination;
+    this._progress = new Progress({
+      getVersions:       0.08,
+      createVersion:     0.02,
+      getSourceFiles:    0.1,
+      writeSourceFiles:  0.4,
+      writeDeletedFiles: 0.3,
+      apply:             0.02,
+      rebuild:           0.08
+    });
   }
 
   get source(): Source {
@@ -62,21 +76,26 @@ class BackupJob extends Job {
 
   start(): Promise<void> {
     // Get existing archive versions
+    this.updateStatus(this._progress.value, 'Reading backup');
     return this.destination.getVersions() // newest first
       .then(vers => { this.versions = vers })
 
       // Make a new version
+      .then(() => { this.updateStatus(this._progress.advance().value, 'Creating new version') })
       .then(this.destination.createVersion.bind(this.destination))
       .then((newVer: ArchiveVersion) => { this.newVersion = newVer })
 
       // Get the source files
+      .then(() => { this.updateStatus(this._progress.advance().value, 'Reading source folder(s)') })
       .then(this.source.getFiles.bind(this.source))
       .then((files: string[]) => { this.sourceFiles = files })
 
       .then(this.writeSourceFiles.bind(this))
       .then(this.writeDeletedFiles.bind(this))
 
+      .then(() => { this.updateStatus(this._progress.advance().value, 'Saving new version') })
       .then(() => this.newVersion.apply())
+      .then(() => { this.updateStatus(this._progress.advance().value, 'Saving backup') })
       .then(() => this.destination.rebuild());
   }
 
@@ -84,7 +103,9 @@ class BackupJob extends Job {
    * Find which files have been added and modified since the last version and copy them.
    */
   private writeSourceFiles(): Promise<any> {
-    return Promise.map(this.sourceFiles, file =>
+    this.updateStatus(this._progress.advance().value, 'Copying files');
+
+    return Promise.map(this.sourceFiles, (file, i) =>
       Promise.each(this.versions, (version: ArchiveVersion) => // sequentially
         version.getFileStatus(file)
           .then(status => {
@@ -121,7 +142,7 @@ class BackupJob extends Job {
           winston.error('Error copying modified files', { error: err });
           return Promise.reject(err);
         }
-      })
+      }).then(() => { this.updateStatus(this._progress.current(i / this.sourceFiles.length).value) })
     );
   }
 
@@ -132,6 +153,8 @@ class BackupJob extends Job {
     // If there are no previous versions (just the new version), skip this
     if (this.versions.length < 2)
       return Promise.resolve();
+
+    this.updateStatus(this._progress.advance().value, 'Looking for deleted files');
 
     return this.versions[1].getFiles() // new version is at [0]
       .then(prevFiles => Promise.map(prevFiles, file => {

@@ -266,10 +266,9 @@ describe('Engine', () => {
       const archive = new FilesystemArchive('Test Archive', 'Archive');
 
       function callback(progress: number, message: string) {
-        expect(progress).toBe(jasmine.any(Number));
-        expect(progress > 0).toBe(true);
-        expect(progress <= 1).toBe(true);
-        expect(message).toBe(jasmine.any(String));
+        expect(progress).toEqual(jasmine.any(Number));
+        expect(progress).toBeBetween([0, 1]);
+        expect(message).toEqual(jasmine.any(String));
         done();
       }
 

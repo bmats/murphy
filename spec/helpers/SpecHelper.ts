@@ -23,6 +23,13 @@ beforeEach(() => {
           return { pass: true };
         }
       };
-    }
+    },
+    toBeBetween: () => {
+      return {
+        compare: function (actual, expected) {
+          return { pass: (actual >= expected[0] && actual <= expected[1]) };
+        }
+      };
+    },
   });
 });
