@@ -3,8 +3,7 @@ import * as MUI from 'material-ui';
 import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
 import BackupComponent from './BackupComponent';
 import RestoreComponent from './RestoreComponent';
-import Archive from '../engine/Archive';
-import Source from '../engine/Source';
+import {Source, Archive} from '../models';
 
 interface Props {
   sources: Source[];

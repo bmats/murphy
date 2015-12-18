@@ -12,7 +12,6 @@ export default class BackupConnector {
   private _ipcOut: Sendable;
   private _engine: Engine;
   private _config: Config;
-  // private _configLoadCallbacks = [];
 
   constructor(ipcIn: EventEmitter, ipcOut: Sendable) {
     ipcIn.on('load-config', this.onLoadConfig.bind(this));
@@ -34,7 +33,6 @@ export default class BackupConnector {
       Config.load()
         .then(config => {
           this._config = config;
-          // this._configLoadCallbacks.forEach(callback => callback());
           this._ipcOut.send('config-loaded', BackupConnector._serializeConfig(config));
         });
     }
@@ -77,17 +75,11 @@ export default class BackupConnector {
   }
 
   onRequestSources(event, arg): void {
-    // if (this._config)
-      this._ipcOut.send('response-sources', this._config.sources);
-    // else
-    //   this._configLoadCallbacks.push(this.onRequestSources);
+    this._ipcOut.send('response-sources', this._config.sources);
   }
 
   onRequestArchives(event, arg): void {
-    // if (this._config)
-      this._ipcOut.send('response-archives', this._config.archives);
-    // else
-    //   this._configLoadCallbacks.push(this.onRequestArchives);
+    this._ipcOut.send('response-archives', this._config.archives);
   }
 
   private static _serializeConfig(config: Config): any {

@@ -5,8 +5,7 @@ import * as React from 'react';
 import * as MUI from 'material-ui';
 import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
 import Theme = require('./MurphyTheme');
-import Archive from '../engine/Archive';
-import Source from '../engine/Source';
+import {Source, Archive} from '../models';
 import AddSelectField from './AddSelectField';
 import VerticalSeparator from './VerticalSeparator';
 
