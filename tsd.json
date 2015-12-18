@@ -9,19 +9,13 @@
       "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
     },
     "node/node.d.ts": {
-      "commit": "923c5431d9447db9d5cf41adc5914e3c94c1ff10"
+      "commit": "40c60850ad6c8175a62d5ab48c4e016ea5b3dffe"
     },
     "material-ui/material-ui.d.ts": {
       "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
     },
     "github-electron/github-electron.d.ts": {
-      "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
-    },
-    "github-electron/github-electron-main.d.ts": {
-      "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
-    },
-    "github-electron/github-electron-renderer.d.ts": {
-      "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"
+      "commit": "40c60850ad6c8175a62d5ab48c4e016ea5b3dffe"
     },
     "winston/winston.d.ts": {
       "commit": "e5a27ea95e47b95333784f1f0d590127b4e39a89"

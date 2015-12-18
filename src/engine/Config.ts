@@ -1,9 +1,11 @@
 import * as fs from 'fs';
 import * as winston from 'winston';
 import Source from './Source';
+import Archive from './Archive';
 
 export default class Config {
   private _sources: Source[] = [];
+  private _archives: Archive[] = [];
 
   static get fileName(): string {
     const homeDir: string = process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'];
@@ -32,7 +34,7 @@ export default class Config {
           try {
             // Parse JSON
             const json: any = JSON.parse(data);
-            if (!json.sources) {
+            if (!json.sources || !json.archives) {
               winston.error('Invalid config file', { json: json });
               reject(new Error('Invalid config file.'));
               return;
@@ -40,6 +42,7 @@ export default class Config {
 
             let config = new Config();
             config._sources = json.sources.map(s => Source.unserialize(s));
+            config._archives = json.archives.map(a => Archive.unserialize(a));
             winston.info('Loaded config file');
             resolve(config);
           } catch (e) {
@@ -55,14 +58,24 @@ export default class Config {
     return this._sources;
   }
 
+  get archives(): Archive[] {
+    return this._archives;
+  }
+
   addSource(source: Source): void {
     this._sources.push(source);
     this.write();
   }
 
+  addArchive(archive: Archive): void {
+    this._archives.push(archive);
+    this.write();
+  }
+
   private write(): void {
     const data = {
-      sources: this._sources.map(s => s.serialize())
+      sources: this._sources.map(s => s.serialize()),
+      archives: this._archives.map(a => a.serialize())
     };
 
     fs.writeFile(Config.fileName, JSON.stringify(data), err => {

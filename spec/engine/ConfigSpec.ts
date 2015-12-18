@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as MockFs from 'mock-fs';
 import Config from '../../src/engine/Config';
+import Archive from '../../src/engine/Archive';
+import FilesystemArchive from '../../src/engine/fs/FilesystemArchive';
 import Source from '../../src/engine/Source';
 
 describe('Config', () => {
@@ -32,6 +34,18 @@ describe('Config', () => {
             name: 'Another Source',
             paths: ['some/path', 'nyan.gif']
           }
+        ],
+        archives: [
+          {
+            name: 'Some Archive',
+            type: 'FilesystemArchive',
+            path: 'path/to/Archive'
+          },
+          {
+            name: 'Another Archive',
+            type: 'FilesystemArchive',
+            path: 'folder/with/Archive'
+          }
         ]
       };
       MockFs({
@@ -47,6 +61,12 @@ describe('Config', () => {
             expect(source).toEqual(jasmine.any(Source));
             expect(source.name).toBe(data.sources[i].name);
             expect(source.paths).toEqual(data.sources[i].paths);
+          });
+
+          config.archives.forEach((archive: FilesystemArchive, i) => {
+            expect(archive).toEqual(jasmine.any(FilesystemArchive));
+            expect(archive.name).toBe(data.archives[i].name);
+            expect(archive.path).toEqual(data.archives[i].path);
           });
         })
         .catch(err => fail(err))
@@ -78,6 +98,19 @@ describe('Config', () => {
     });
   });
 
+  describe('.addArchive() and .archives', () => {
+    it('adds an archive to archives', () => {
+      const config = new Config();
+      expect(config.archives.length).toBe(0);
+
+      const newArchive = new FilesystemArchive('Added Archive', 'path/to/Archive');
+      config.addArchive(newArchive);
+      expect(config.archives.length).toBe(1);
+      expect(config.archives[0].name).toBe(newArchive.name);
+      expect((<FilesystemArchive>config.archives[0]).path).toEqual(newArchive.path);
+    });
+  });
+
   describe('.write()', () => {
     it('correctly writes a file', (done) => {
       const expectedData = {
@@ -90,11 +123,24 @@ describe('Config', () => {
             name: 'Another Source',
             paths: ['some/path', 'nyan.gif']
           }
+        ],
+        archives: [
+          {
+            name: 'Some Archive',
+            type: 'FilesystemArchive',
+            path: 'path/to/Archive'
+          },
+          {
+            name: 'Another Archive',
+            type: 'FilesystemArchive',
+            path: 'folder/with/Archive'
+          }
         ]
       };
 
       const config = new Config();
       expectedData.sources.forEach(s => config.addSource(new Source(s.name, s.paths)));
+      expectedData.archives.forEach(a => config.addArchive(new FilesystemArchive(a.name, a.path)));
 
       fs.readFile(Config.fileName, { encoding: 'utf8' }, (err, data) => {
         expect(err).toBeFalsy();

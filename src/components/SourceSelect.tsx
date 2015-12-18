@@ -5,13 +5,12 @@ import Menu = require('material-ui/lib/menu/menu');
 import Source from '../engine/Source';
 
 interface Props {
-  sources: Source[]
-  defaultSource: Source
-  onAdd?: (name: string) => void
+  sources: Source[];
+  onAdd?: () => void;
 }
 
 interface State {
-  selected: Source
+  selectedIndex: number;
 }
 
 export default class SourceSelect extends React.Component<Props, State> {
@@ -19,7 +18,7 @@ export default class SourceSelect extends React.Component<Props, State> {
     super(props);
 
     this.state = {
-      selected: props.defaultSource
+      selectedIndex: 0
     };
   }
 
@@ -28,23 +27,28 @@ export default class SourceSelect extends React.Component<Props, State> {
   }
 
   render() {
-    const index: number = this.props.sources.indexOf(this.state.selected);
-    const items: any[] = this.props.sources.map((e: Source, i: number) => {
+    const items: {text: string; payload: number}[] = this.props.sources.map((e: Source, i: number) => {
       return {
         text: e.name,
         payload: i
       };
-    })
-    return (
-      <div>
-        <MUI.SelectField value={index} menuItems={items} onChange={this._handleValueChange.bind(this)} />
-      </div>
-    );
+    });
+    items.push({
+      text: 'Add Folders',
+      payload: items.length
+    });
+    return items.length > 1
+      ? <MUI.SelectField value={this.state.selectedIndex} menuItems={items} onChange={this._handleValueChange.bind(this)} />
+      : <MUI.FlatButton label="Add Folders" onClick={this.props.onAdd} />;
   }
 
-  private _handleValueChange(e: MUI.TouchTapEvent, index: number, menuItem: Source) {
-    this.setState({
-      selected: this.props.sources[index]
-    });
+  private _handleValueChange(e: MUI.TouchTapEvent, index: number, menuItem: {}) {
+    if (index === this.props.sources.length) {
+      if (this.props.onAdd) this.props.onAdd();
+    } else {
+      this.setState({
+        selectedIndex: index
+      });
+    }
   }
 }

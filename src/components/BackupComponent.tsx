@@ -1,14 +1,19 @@
+import {remote, ipcRenderer} from 'electron';
+const dialog = remote.require('dialog');
+import * as path from 'path';
 import * as React from 'react';
 import * as MUI from 'material-ui';
 import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
 import Theme = require('./MurphyTheme');
+import Archive from '../engine/Archive';
 import Source from '../engine/Source';
+import ArchiveSelect from './ArchiveSelect';
 import SourceSelect from './SourceSelect';
 import VerticalSeparator from './VerticalSeparator';
 
 interface Props {
-  sources: Source[],
-  selectedSource: Source
+  sources: Source[];
+  archives: Archive[];
 }
 
 interface State {
@@ -34,21 +39,24 @@ export default class BackupComponent extends React.Component<Props, State> {
       leftSide: {
         display: 'inline-block',
         width: '50%',
-        paddingRight: 10 + padding,
+        verticalAlign: 'top',
+        paddingRight: padding,
         boxSizing: 'border-box',
         textAlign: 'center'
       },
       rightSide: {
         display: 'inline-block',
         width: '50%',
-        paddingLeft: 10 + padding,
+        verticalAlign: 'top',
+        paddingLeft: padding,
         boxSizing: 'border-box',
         textAlign: 'center'
       },
       heading: {
         fontSize: 24,
         fontWeight: 400,
-        marginTop: 0
+        marginTop: 0,
+        marginBottom: padding
       },
       headingCaption: {
         display: 'block',
@@ -64,6 +72,31 @@ export default class BackupComponent extends React.Component<Props, State> {
     };
   }
 
+  private onSourceAdd(source: Source) {
+    dialog.showOpenDialog({
+      title: 'Select Folders',
+      // defaultPath: process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'],
+      properties: ['openDirectory', 'multiSelections']
+    }, (folders) => {
+      ipcRenderer.send('add-source', {
+        name: folders.map(f => path.basename(f)).join(', '), // TODO: present dialog to name source
+        paths: folders
+      });
+    });
+  }
+
+  private onArchiveAdd(source: Source) {
+    dialog.showOpenDialog({
+      title: 'Select Folder',
+      properties: ['openDirectory', 'createDirectory']
+    }, (folders) => {
+      ipcRenderer.send('add-archive', {
+        name: path.basename(folders[0]), // TODO: present dialog to name backup
+        path: folders[0]
+      });
+    });
+  }
+
   render() {
     return (
       <div style={{height: '100%'}}>
@@ -73,15 +106,15 @@ export default class BackupComponent extends React.Component<Props, State> {
               What
               <small style={this.styles.headingCaption}>What folders should I back up?</small>
             </h2>
-            <SourceSelect sources={this.props.sources} defaultSource={this.props.selectedSource} />
+            <SourceSelect sources={this.props.sources} onAdd={this.onSourceAdd.bind(this)} />
           </div>
-          <VerticalSeparator width={20} verticalMargin={Theme.spacing.desktopGutter} />
+          <VerticalSeparator verticalMargin={Theme.spacing.desktopGutter} />
           <div style={this.styles.rightSide}>
             <h2 style={this.styles.heading}>
               Where
               <small style={this.styles.headingCaption}>Where should I back them up?</small>
             </h2>
-            <SourceSelect sources={this.props.sources} defaultSource={this.props.selectedSource} />
+            <ArchiveSelect archives={this.props.archives} onAdd={this.onArchiveAdd.bind(this)} />
           </div>
         </MUI.Paper>
         <MUI.Paper style={this.styles.card}>

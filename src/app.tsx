@@ -1,18 +1,15 @@
+import {ipcRenderer} from 'electron';
 import * as React from 'react';
 const ReactDOM = require('react-dom');
 import * as utils from './utils';
 import MainComponent from './components/MainComponent';
-import Source from './engine/Source';
 
 require('react-tap-event-plugin')();
 
-// TODO: testing
-let backupSources: Source[] = [
-  new Source('My Stuff', ['~']),
-  new Source('Storage', ['/Volumes/Storage/Documents;/Volumes/Storage/Music'])
-];
-
-ReactDOM.render(<MainComponent backupSources={backupSources} selectedBackupSource={backupSources[0]} />, document.getElementById('app'));
+ipcRenderer.on('config-loaded', (event, config) => {
+  ReactDOM.render(<MainComponent sources={config.sources} archives={config.archives} />, document.getElementById('app'));
+});
+ipcRenderer.send('load-config');
 
 if (process.env.NODE_ENV === 'development') {
   utils.addLiveReload();

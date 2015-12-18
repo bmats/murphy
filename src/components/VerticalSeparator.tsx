@@ -2,7 +2,6 @@ import * as React from 'react';
 import * as MUI from 'material-ui';
 
 interface Props {
-  width: number,
   verticalMargin: number,
   direction?: string,
   color?: string
@@ -25,14 +24,13 @@ export default class VerticalSeparator extends React.Component<Props, {}> {
         position: 'absolute',
         top: 0,
         left: '50%',
-        width: this.props.width,
-        height: '100%',
-        marginLeft: -this.props.width / 2
+        width: 1,
+        height: '100%'
       },
       line: {
         position: 'absolute',
         top: this.props.verticalMargin,
-        left: this.props.width / 2,
+        left: 0,
         bottom: this.props.verticalMargin,
         borderLeft: `1px solid ${this.props.color}`
       },
@@ -55,7 +53,7 @@ export default class VerticalSeparator extends React.Component<Props, {}> {
       <div style={this.styles.separator}>
         <div style={this.styles.line}></div>
         <MUI.SvgIcon style={this.styles.icon}>
-          <path d="M23.25 12l-11.25-11.25v6.75h-12v9h12v6.75z"></path>
+          <path d='M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z' />
         </MUI.SvgIcon>
       </div>
     );
