@@ -7,8 +7,7 @@ import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
 import Theme = require('./MurphyTheme');
 import Archive from '../engine/Archive';
 import Source from '../engine/Source';
-import ArchiveSelect from './ArchiveSelect';
-import SourceSelect from './SourceSelect';
+import AddSelectField from './AddSelectField';
 import VerticalSeparator from './VerticalSeparator';
 
 interface Props {
@@ -106,7 +105,7 @@ export default class BackupComponent extends React.Component<Props, State> {
               What
               <small style={this.styles.headingCaption}>What folders should I back up?</small>
             </h2>
-            <SourceSelect sources={this.props.sources} onAdd={this.onSourceAdd.bind(this)} />
+            <AddSelectField label="Folders" items={this.props.sources.map(s => s.name)} onAdd={this.onSourceAdd.bind(this)} />
           </div>
           <VerticalSeparator verticalMargin={Theme.spacing.desktopGutter} />
           <div style={this.styles.rightSide}>
@@ -114,7 +113,7 @@ export default class BackupComponent extends React.Component<Props, State> {
               Where
               <small style={this.styles.headingCaption}>Where should I back them up?</small>
             </h2>
-            <ArchiveSelect archives={this.props.archives} onAdd={this.onArchiveAdd.bind(this)} />
+            <AddSelectField label="Backup" items={this.props.archives.map(a => a.name)} onAdd={this.onArchiveAdd.bind(this)} />
           </div>
         </MUI.Paper>
         <MUI.Paper style={this.styles.card}>
