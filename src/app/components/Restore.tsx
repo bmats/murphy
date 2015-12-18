@@ -8,7 +8,7 @@ interface Props {
 interface State {
 }
 
-export default class RestoreComponent extends React.Component<Props, State> {
+export default class Restore extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
   }

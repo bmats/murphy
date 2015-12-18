@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as MUI from 'material-ui';
 import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
-import BackupComponent from './BackupComponent';
-import RestoreComponent from './RestoreComponent';
+import Backup from './Backup';
+import Restore from './Restore';
 import {Source, Archive} from '../models';
 
 interface Props {
@@ -14,7 +14,7 @@ interface State {
   muiTheme: MUI.Styles.MuiTheme;
 }
 
-export default class MainComponent extends React.Component<Props, State> {
+export default class Murphy extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -37,10 +37,10 @@ export default class MainComponent extends React.Component<Props, State> {
     return (
       <MUI.Tabs>
         <MUI.Tab label="BACKUP">
-          <BackupComponent sources={this.props.sources} archives={this.props.archives} />
+          <Backup sources={this.props.sources} archives={this.props.archives} />
         </MUI.Tab>
         <MUI.Tab label="RESTORE">
-          <RestoreComponent />
+          <Restore />
         </MUI.Tab>
       </MUI.Tabs>
     );

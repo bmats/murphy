@@ -17,7 +17,7 @@ interface Props {
 interface State {
 }
 
-export default class BackupComponent extends React.Component<Props, State> {
+export default class Backup extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
   }
