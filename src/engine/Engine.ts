@@ -105,7 +105,7 @@ class BackupJob extends Job {
       .then(() => this.newVersion.apply())
       .then(() => { this.updateStatus(this._progress.advance().value, 'Saving backup') })
       .then(() => this.destination.rebuild())
-      .then(() => { this.updateStatus(1, 'Done') });
+      .then(() => { this.updateStatus(1, 'Backup complete') });
   }
 
   /**
@@ -118,7 +118,7 @@ class BackupJob extends Job {
       Promise.each(this.versions, (version: ArchiveVersion) => // sequentially
         version.getFileStatus(file)
           .then(status => {
-            this.updateStatus(this._progress.current(i / this.sourceFiles.length).value);
+            this.updateStatus(this._progress.current(i / this.sourceFiles.length).value, `Copying "${file}"`);
 
             switch (status) {
             case 'add':

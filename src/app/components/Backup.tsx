@@ -1,5 +1,6 @@
 import {remote, ipcRenderer} from 'electron';
 const dialog = remote.require('dialog');
+import * as _ from 'lodash';
 import * as path from 'path';
 import * as React from 'react';
 import * as MUI from 'material-ui';
@@ -27,12 +28,12 @@ export default class Backup extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    ipcRenderer.on('backup-progress', (event, arg) => {
+    ipcRenderer.on('backup-progress', _.throttle((event, arg) => {
       this.setState({
         progress: arg.progress,
         progressMessage: arg.message
       });
-    });
+    }, 50));
     ipcRenderer.on('backup-complete', (event, arg) => {
       this.setState({
         isRunning: false
