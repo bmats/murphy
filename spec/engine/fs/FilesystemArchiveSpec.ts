@@ -48,9 +48,14 @@ describe('FilesystemArchive', () => {
       expect(versions.isDirectory()).toBe(true);
     });
 
-    it('fails when the folder exists', (done) => {
+    it('fails when the folder is not empty', (done) => {
       const existingFolder = 'Existing';
-      fs.mkdirSync(existingFolder);
+      MockFs({
+        [existingFolder]: {
+          'somefile.txt': ''
+        }
+      });
+
       const archive = new FilesystemArchive('Test Archive', existingFolder);
       archive.init()
         .then(() => fail('Expected error'))
@@ -162,7 +167,7 @@ describe('FilesystemArchive', () => {
       let newVersion: FilesystemArchiveVersion;
       archive.getVersions() // cache initial versions
       .then(archive.createVersion.bind(archive))
-        .then(version => { newVersion = version })
+        .then((version: FilesystemArchiveVersion) => { newVersion = version })
         .then(archive.getVersions.bind(archive))
         .then(versions => expect(versions[0]).toBe(newVersion))
         .catch(err => fail(err))

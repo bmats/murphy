@@ -5,7 +5,7 @@ import * as winston from 'winston';
 import Archive from '../Archive';
 import ArchiveVersion from '../ArchiveVersion';
 import FilesystemArchiveVersion from './FilesystemArchiveVersion';
-import {checkPathDoesNotExist, mkdirAsync, mkdirpAsync, readdirAsync, symlinkAsync, writeFileAsync} from '../util';
+import {mkdirAsync, mkdirpAsync, readdirAsync, symlinkAsync, writeFileAsync} from '../util';
 
 const DIRSEP = path.sep;
 const README_FILENAME: string = 'READ ME.txt';
@@ -48,26 +48,33 @@ export default class FilesystemArchive extends Archive {
 
   init(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      // Make sure folder does not exist
-      checkPathDoesNotExist(this.path)
-        .then(resolve)
-        .catch((err) => {
-          winston.error('Filesystem archive folder already exists', { path: this.path });
-          reject(new Error('Archive folder already exists'));
-        });
-    }).then(() => new Promise<void>((resolve, reject) => {
       // Make folder
-      mkdirAsync(this.path)
+      mkdirpAsync(this.path)
         .then(resolve)
         .catch((err) => {
           winston.error('Error making archive folder', { path: this.path, error: err });
           reject(new Error('Error creating archive folder'));
         });
+    }).then(() => new Promise<void>((resolve, reject) => {
+      // Make sure folder is empty
+      readdirAsync(this.path)
+        .then(files => {
+          if (files.length === 0) {
+            resolve();
+          } else {
+            winston.error('Archive folder is not empty', { path: this.path });
+            reject(new Error('Archive folder is not empty'));
+          }
+        })
+        .catch((err) => {
+          winston.error('Error reading archive folder', { path: this.path, error: err });
+          reject(new Error('Error reading archive folder'));
+        });
     })).then(() => new Promise<void>((resolve, reject) => {
       // Make archive structure
       writeFileAsync(this.path + DIRSEP + README_FILENAME, this.getReadMeText())
-        .then(mkdirAsync(this.path + DIRSEP + LATEST_FOLDER))
-        .then(mkdirAsync(this.path + DIRSEP + VERSIONS_FOLDER))
+        .then(() => mkdirAsync(this.path + DIRSEP + LATEST_FOLDER))
+        .then(() => mkdirAsync(this.path + DIRSEP + VERSIONS_FOLDER))
         .then(resolve)
         .catch((err) => {
           winston.error('Error building archive', { error: err });
@@ -114,7 +121,7 @@ export default class FilesystemArchive extends Archive {
                 // Write the symlink for added/modified files
                 const symlinkPath: string = this.path + DIRSEP + LATEST_FOLDER + DIRSEP + file;
                 return mkdirpAsync(path.dirname(symlinkPath))
-                  .then(symlinkAsync(
+                  .then(() => symlinkAsync(
                     this.path + DIRSEP + VERSIONS_FOLDER + DIRSEP + version.folderName + DIRSEP + file,
                     symlinkPath));
               case 'delete':
