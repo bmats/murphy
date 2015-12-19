@@ -1,7 +1,7 @@
-export class Source {
+export interface Source {
   name: string;
 }
 
-export class Archive {
+export interface Archive {
   name: string;
 }

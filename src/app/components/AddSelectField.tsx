@@ -6,7 +6,9 @@ import Menu = require('material-ui/lib/menu/menu');
 interface Props {
   label: string;
   items: string[];
-  onAdd?: () => void;
+  value: number;
+  onAdd?: () => any;
+  onChange?: (name: string) => any;
 }
 
 interface State {
@@ -18,8 +20,14 @@ export default class AddSelectField extends React.Component<Props, State> {
     super(props);
 
     this.state = {
-      selectedIndex: 0
+      selectedIndex: props.value
     };
+  }
+
+  componentWillReceiveProps(nextProps: Props) {
+    this.setState({
+      selectedIndex: nextProps.value
+    });
   }
 
   static childContextTypes: any = {
@@ -42,13 +50,14 @@ export default class AddSelectField extends React.Component<Props, State> {
       : <MUI.FlatButton label={'Add ' + this.props.label} onClick={this.props.onAdd} />;
   }
 
-  private _handleValueChange(e: MUI.TouchTapEvent, index: number, menuItem: {}) {
+  private _handleValueChange(e: MUI.TouchTapEvent, index: number) {
     if (index === this.props.items.length) {
       if (this.props.onAdd) this.props.onAdd();
     } else {
       this.setState({
         selectedIndex: index
       });
+      if (this.props.onChange) this.props.onChange(this.props.items[index]);
     }
   }
 }

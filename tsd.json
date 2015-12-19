@@ -37,6 +37,9 @@
     },
     "mkdirp/mkdirp.d.ts": {
       "commit": "f8af639bf29b2b00e5d27ce93c0f046564b8525c"
+    },
+    "es6-shim/es6-shim.d.ts": {
+      "commit": "40c60850ad6c8175a62d5ab48c4e016ea5b3dffe"
     }
   }
 }

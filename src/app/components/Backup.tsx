@@ -15,11 +15,41 @@ interface Props {
 }
 
 interface State {
+  running?: boolean;
+  progress?: number;
+  progressMessage?: string;
+  selectedSource?: Source;
+  selectedArchive?: Archive;
 }
 
 export default class Backup extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
+
+    ipcRenderer.on('backup-progress', (event, arg) => {
+      this.setState({
+        progress: arg.progress,
+        progressMessage: arg.message
+      });
+    });
+    ipcRenderer.on('backup-complete', (event, arg) => {
+      this.setState({
+        running: false
+      });
+    });
+    ipcRenderer.on('backup-error', (event, arg) => {
+      this.setState({
+        running: false
+      });
+    });
+
+    this.state = {
+      running: false,
+      progress: 0,
+      progressMessage: null,
+      selectedSource: props.sources[0],
+      selectedArchive: props.archives[0]
+    };
   }
 
   static childContextTypes: any = {
@@ -62,7 +92,11 @@ export default class Backup extends React.Component<Props, State> {
         marginTop: 8,
         fontSize: 13
       },
-      submitButton: {
+      progressMessage: {
+        fontSize: 14,
+        marginTop: padding / 2
+      },
+      runButton: {
         position: 'fixed',
         right: padding,
         bottom: padding
@@ -70,32 +104,71 @@ export default class Backup extends React.Component<Props, State> {
     };
   }
 
-  private onSourceAdd(source: Source) {
+  private onSourceAdd() {
     dialog.showOpenDialog({
       title: 'Select Folders',
       // defaultPath: process.env[process.platform === 'win32' ? 'USERPROFILE' : 'HOME'],
       properties: ['openDirectory', 'multiSelections']
     }, (folders) => {
+      if (!folders) return;
       ipcRenderer.send('add-source', {
         name: folders.map(f => path.basename(f)).join(', '), // TODO: present dialog to name source
         paths: folders
       });
+      // TODO: change selected value
     });
   }
 
-  private onArchiveAdd(source: Source) {
+  private onSourceChange(sourceName: string) {
+    this.setState({
+      selectedSource: this.props.sources.find(s => s.name === sourceName)
+    });
+  }
+
+  private onArchiveAdd() {
     dialog.showOpenDialog({
       title: 'Select Folder',
       properties: ['openDirectory', 'createDirectory']
     }, (folders) => {
+      if (!folders) return;
       ipcRenderer.send('add-archive', {
         name: path.basename(folders[0]), // TODO: present dialog to name backup
         path: folders[0]
       });
+      // TODO: change selected value
+    });
+  }
+
+  private onArchiveChange(archiveName: string) {
+    this.setState({
+      selectedArchive: this.props.archives.find(a => a.name === archiveName)
+    });
+  }
+
+  private onStartClick() {
+    ipcRenderer.send('start-backup', {
+      source: this.state.selectedSource,
+      destination: this.state.selectedArchive
     });
   }
 
   render() {
+    let sourceIndex = this.props.sources.indexOf(this.state.selectedSource);
+    if (sourceIndex < 0) sourceIndex = 0;
+    let archiveIndex = this.props.archives.indexOf(this.state.selectedArchive);
+    if (archiveIndex < 0) archiveIndex = 0;
+    const isBackupReady = this.props.sources.length > 0 && this.props.archives.length > 0;
+
+    const statusCards = [];
+    if (this.state.running) {
+      statusCards.push(
+        <MUI.Paper style={this.styles.card}>
+          <MUI.LinearProgress mode="determinate" value={this.state.progress * 100} />
+          <div style={this.styles.progressMessage}>{this.state.progressMessage}</div>
+        </MUI.Paper>
+      );
+    }
+
     return (
       <div style={{height: '100%'}}>
         <MUI.Paper style={this.styles.card}>
@@ -104,7 +177,8 @@ export default class Backup extends React.Component<Props, State> {
               What
               <small style={this.styles.headingCaption}>What folders should I back up?</small>
             </h2>
-            <AddSelectField label="Folders" items={this.props.sources.map(s => s.name)} onAdd={this.onSourceAdd.bind(this)} />
+            <AddSelectField label="Folders" items={this.props.sources.map(s => s.name)} value={sourceIndex}
+              onAdd={this.onSourceAdd.bind(this)} onChange={this.onSourceChange.bind(this)} />
           </div>
           <VerticalSeparator verticalMargin={Theme.spacing.desktopGutter} />
           <div style={this.styles.rightSide}>
@@ -112,15 +186,13 @@ export default class Backup extends React.Component<Props, State> {
               Where
               <small style={this.styles.headingCaption}>Where should I back them up?</small>
             </h2>
-            <AddSelectField label="Backup" items={this.props.archives.map(a => a.name)} onAdd={this.onArchiveAdd.bind(this)} />
+            <AddSelectField label="Backup" items={this.props.archives.map(a => a.name)} value={archiveIndex}
+              onAdd={this.onArchiveAdd.bind(this)} onChange={this.onArchiveChange.bind(this)} />
           </div>
         </MUI.Paper>
-        <MUI.Paper style={this.styles.card}>
-          <MUI.LinearProgress mode="determinate" value={60} />
-          <div>Status goes here</div>
-        </MUI.Paper>
-        <MUI.FloatingActionButton style={this.styles.submitButton}>
-          <MUI.SvgIcon>
+        {statusCards}
+        <MUI.FloatingActionButton style={this.styles.runButton} onClick={this.onStartClick.bind(this)} disabled={!isBackupReady}>
+          <MUI.SvgIcon color={isBackupReady ? undefined : 'rgba(0, 0, 0, 0.3)'}>
             <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
           </MUI.SvgIcon>
         </MUI.FloatingActionButton>
