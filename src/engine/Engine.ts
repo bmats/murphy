@@ -15,6 +15,14 @@ function verifyChecksums(file: string, checksums: string[]): Promise<void> {
     : Promise.reject(new Error(`Mismatching checksums for "${file}": ${checksums[0]} vs. ${checksums[1]}`));
 }
 
+// Throw this to stop a promise chain
+class StopPromiseError extends Error {
+}
+
+function stopPromise(): StopPromiseError {
+  throw new StopPromiseError();
+}
+
 abstract class Job {
   private _callback: ProgressCallback;
   private _stop: boolean;
@@ -124,12 +132,12 @@ class BackupJob extends Job {
                       .then(checksums => verifyChecksums(file, checksums))
                   }
                 })
-                .then(Promise.reject); // indicate file was found
+                .then(stopPromise); // file was found
             case 'delete':
               return this.newVersion.writeFile(file, 'add', this.source.createReadStream(file))
                 .then(() => Promise.all([this.source.getFileChecksum(file), this.newVersion.getFileChecksum(file)]))
                 .then(checksums => verifyChecksums(file, checksums))
-                .then(Promise.reject); // indicate file was found
+                .then(stopPromise); // file was found
             }
           })
       ).then(() => {
@@ -138,7 +146,7 @@ class BackupJob extends Job {
           .then(() => Promise.all([this.source.getFileChecksum(file), this.newVersion.getFileChecksum(file)]))
           .then(checksums => verifyChecksums(file, checksums));
       }, (err) => {
-        if (!err) {
+        if (err instanceof StopPromiseError) {
           // Rejected above, meaning version was found, so this is OK
           // Keep calm and carry on
         } else {
@@ -199,6 +207,7 @@ class RestoreJob extends Job {
   }
 }
 
+// TODO: implement job stopping?
 export default class Engine {
   private _jobCount: number = 0;
 

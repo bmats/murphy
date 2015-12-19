@@ -123,6 +123,14 @@ describe('FilesystemArchive', () => {
         .catch(err => fail(err))
         .then(done);
     });
+
+    it('removes symlinks if they already exist', (done) => {
+      const archive = new FilesystemArchive('Test Archive', 'Archive');
+      archive.rebuild()
+        .then(archive.rebuild.bind(archive)) // re-run rebuild
+        .catch(err => fail(err))
+        .then(done);
+    });
   });
 
   describe('.createVersion()', () => {

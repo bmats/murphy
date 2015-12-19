@@ -5,7 +5,7 @@ import * as winston from 'winston';
 import Archive from '../Archive';
 import ArchiveVersion from '../ArchiveVersion';
 import FilesystemArchiveVersion from './FilesystemArchiveVersion';
-import {mkdirAsync, mkdirpAsync, readdirAsync, symlinkAsync, writeFileAsync} from '../util';
+import {mkdirAsync, mkdirpAsync, readdirAsync, symlinkAsync, unlinkNoErrAsync, writeFileAsync} from '../util';
 
 const DIRSEP = path.sep;
 const README_FILENAME: string = 'READ ME.txt';
@@ -130,6 +130,7 @@ export default class FilesystemArchive extends Archive {
                 // Write the symlink for added/modified files
                 const symlinkPath: string = this.path + DIRSEP + LATEST_FOLDER + DIRSEP + file;
                 return mkdirpAsync(path.dirname(symlinkPath))
+                  .then(() => unlinkNoErrAsync(symlinkPath)) // remove the symlink if it exists first
                   .then(() => symlinkAsync(
                     this.path + DIRSEP + VERSIONS_FOLDER + DIRSEP + version.folderName + DIRSEP + file,
                     symlinkPath));
@@ -139,6 +140,10 @@ export default class FilesystemArchive extends Archive {
               default:
                 throw new Error(`Invalid file status "${status}" ${file} ${version.folderName}`);
               }
+            })
+            .catch(err => {
+              winston.error('Error rebuilding archive', { file: file, error: err });
+              throw err;
             });
         }));
       }).then(() => {});

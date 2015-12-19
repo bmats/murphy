@@ -13,6 +13,12 @@ export function checkPathDoesNotExist(path: string): Promise<void> {
   });
 }
 
+export function unlinkNoErrAsync(path: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    fs.unlink(path, err => resolve());
+  });
+}
+
 export function hashStream(stream: stream.Readable): Promise<string> {
   return new Promise((resolve: (checksum: string) => void, reject: (err) => any) => {
     let hash: stream.Duplex = crypto.createHash('sha1');
