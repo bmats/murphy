@@ -15,7 +15,8 @@ interface Props {
 }
 
 interface State {
-  running?: boolean;
+  isRunning?: boolean;
+  hasRun?: boolean;
   progress?: number;
   progressMessage?: string;
   selectedSource?: Source;
@@ -34,17 +35,19 @@ export default class Backup extends React.Component<Props, State> {
     });
     ipcRenderer.on('backup-complete', (event, arg) => {
       this.setState({
-        running: false
+        isRunning: false
       });
     });
     ipcRenderer.on('backup-error', (event, arg) => {
       this.setState({
-        running: false
+        isRunning: false
       });
+      alert('Backup error:\n' + arg.error);
     });
 
     this.state = {
-      running: false,
+      isRunning: false,
+      hasRun: false,
       progress: 0,
       progressMessage: null,
       selectedSource: props.sources[0],
@@ -146,6 +149,8 @@ export default class Backup extends React.Component<Props, State> {
   }
 
   private onStartClick() {
+    this.state.isRunning = true;
+    this.state.hasRun = true;
     ipcRenderer.send('start-backup', {
       source: this.state.selectedSource,
       destination: this.state.selectedArchive
@@ -157,12 +162,12 @@ export default class Backup extends React.Component<Props, State> {
     if (sourceIndex < 0) sourceIndex = 0;
     let archiveIndex = this.props.archives.indexOf(this.state.selectedArchive);
     if (archiveIndex < 0) archiveIndex = 0;
-    const isBackupReady = this.props.sources.length > 0 && this.props.archives.length > 0;
+    const isBackupReady = !this.state.isRunning && this.props.sources.length > 0 && this.props.archives.length > 0;
 
     const statusCards = [];
-    if (this.state.running) {
+    if (this.state.hasRun) {
       statusCards.push(
-        <MUI.Paper style={this.styles.card}>
+        <MUI.Paper key="progress" style={this.styles.card}>
           <MUI.LinearProgress mode="determinate" value={this.state.progress * 100} />
           <div style={this.styles.progressMessage}>{this.state.progressMessage}</div>
         </MUI.Paper>

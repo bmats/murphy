@@ -56,11 +56,18 @@ export default class BackupConnector {
     }
 
     this._engine.runBackup(source, dest, this.onBackupProgress.bind(this))
-      .then(() => { this._ipcOut.send('backup-complete', null) })
-      .catch((err) => { this._ipcOut.send('backup-error', err) });
+      .then(() => {
+        winston.info('Backup complete');
+        this._ipcOut.send('backup-complete', null);
+      })
+      .catch(err => {
+        winston.error('Backup error', { error: err });
+        this._ipcOut.send('backup-error', err);
+      });
   }
 
   private onBackupProgress(progress: number, message: string) {
+    winston.debug('Backup progress', { progress: progress, progressMessage: message });
     this._ipcOut.send('backup-progress', {
       progress: progress,
       message: message

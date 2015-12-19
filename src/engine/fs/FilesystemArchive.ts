@@ -14,11 +14,13 @@ const VERSIONS_FOLDER: string = 'Versions';
 
 const README_BODY: string = `Backed up using Murphy (https://github.com/bmats/murphy).\r
 \r
+===== RESTORING FILES =====\r
+\r
 To restore any version using Murphy:\r
   1. Download Murphy from https://github.com/bmats/murphy/releases\r
   2. Open Murphy and click "Restore"\r
   3. Choose this folder and the folder to restore the backup into\r
-  4. Click "Start Restore"\r
+  4. Click the play button to start the restore\r
 \r
 To restore the latest version without Murphy:\r
   If you are on Windows:\r
@@ -30,6 +32,13 @@ To restore the latest version without Murphy:\r
     3. Press enter\r
     4. Type: "cp -r *", space, and drag the folder into which you want the backup to be restored onto the Terminal\r
     5. Press enter\r
+\r
+===== FAQ =====\r
+\r
+Q: Files in the "Latest" folder are really small and look different. What happened?\r
+A: All of the files in this folder are actually just aliases for the latest versions of files stored in the\r
+   "Versions" folder. This means that only one copy of each file is stored. As you back up changes, the aliases\r
+   in the "Latest" folder will be updated.\r
 `;
 
 export default class FilesystemArchive extends Archive {

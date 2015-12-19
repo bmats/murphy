@@ -32,6 +32,6 @@ export function hashStream(stream: stream.Readable): Promise<string> {
 export const mkdirAsync     = Promise.promisify(fs.mkdir);
 export const mkdirpAsync    = Promise.promisify(mkdirp);
 export const readdirAsync   = Promise.promisify(fs.readdir);
-export const readFileAsync  = Promise.promisify(fs.readFile);
-export const symlinkAsync   = Promise.promisify(fs.symlink);
-export const writeFileAsync = Promise.promisify(fs.writeFile);
+export const readFileAsync: (file: string, options?: {}) => Promise<string | Buffer> = Promise.promisify(fs.readFile);
+export const symlinkAsync: (target: string, path: string, type?: string)  => Promise<void> = Promise.promisify(fs.symlink);
+export const writeFileAsync: (file: string, data: any) => Promise<{}> = Promise.promisify(fs.writeFile);

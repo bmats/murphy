@@ -96,7 +96,8 @@ class BackupJob extends Job {
       .then(() => { this.updateStatus(this._progress.advance().value, 'Saving new version') })
       .then(() => this.newVersion.apply())
       .then(() => { this.updateStatus(this._progress.advance().value, 'Saving backup') })
-      .then(() => this.destination.rebuild());
+      .then(() => this.destination.rebuild())
+      .then(() => { this.updateStatus(1, 'Done') });
   }
 
   /**
@@ -109,6 +110,8 @@ class BackupJob extends Job {
       Promise.each(this.versions, (version: ArchiveVersion) => // sequentially
         version.getFileStatus(file)
           .then(status => {
+            this.updateStatus(this._progress.current(i / this.sourceFiles.length).value);
+
             switch (status) {
             case 'add':
             case 'modify':
@@ -142,7 +145,7 @@ class BackupJob extends Job {
           winston.error('Error copying modified files', { error: err });
           return Promise.reject(err);
         }
-      }).then(() => { this.updateStatus(this._progress.current(i / this.sourceFiles.length).value) })
+      })
     );
   }
 

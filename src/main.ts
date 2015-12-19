@@ -2,7 +2,7 @@ import {app, BrowserWindow, ipcMain} from 'electron';
 import * as winston from 'winston';
 import BackupConnector from './BackupConnector';
 
-winston.add(winston.transports.File, { filename: 'murphy.log' });
+winston.add(winston.transports.File, { filename: 'murphy.log', level: 'debug' });
 
 // electron.crashReporter.start();
 
@@ -23,7 +23,7 @@ app.on('window-all-closed', () => {
 // initialization and is ready to create browser windows.
 app.on('ready', () => {
   // Create the browser window
-  mainWindow = new BrowserWindow({width: 800, height: 600});
+  mainWindow = new BrowserWindow({ width: 800, height: 600, minWidth: 660, minHeight: 495 });
   winston.info('Created BrowserWindow');
 
   connector = new BackupConnector(ipcMain, mainWindow.webContents);

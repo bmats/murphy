@@ -45,7 +45,7 @@ export default class AddSelectField extends React.Component<Props, State> {
       text: 'Add New ' + this.props.label,
       payload: items.length
     });
-    return items.length > 1
+    return (items.length > 1)
       ? <MUI.SelectField value={this.state.selectedIndex} menuItems={items} onChange={this._handleValueChange.bind(this)} />
       : <MUI.FlatButton label={'Add ' + this.props.label} onClick={this.props.onAdd} />;
   }
