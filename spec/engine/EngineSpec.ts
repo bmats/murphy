@@ -261,23 +261,276 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
-      const source = new Source('Test Source', ['Source']);
-      const archive = new FilesystemArchive('Test Archive', 'Archive');
-
+      let callbackCalled = false;
       function callback(progress: number, message: string) {
         expect(progress).toEqual(jasmine.any(Number));
         expect(progress).toBeBetween([0, 1]);
         expect(message).toEqual(jasmine.any(String));
-        done();
+        callbackCalled = true;
       }
 
+      const engine = new Engine();
+      const source = new Source('Test Source', ['Source']);
+      const archive = new FilesystemArchive('Test Archive', 'Archive');
       engine.runBackup(source, archive, callback)
-        .catch(err => fail(err));
+        .catch(err => fail(err))
+        .then(() => {
+          if (!callbackCalled) fail('Callback was not called');
+          done();
+        });
     });
   });
 
   describe('.runRestore()', () => {
-    // TODO: add specs
+    it('restores all files and creates a summary', (done) => {
+      MockFs({
+        out: {},
+        Archive: {
+          Versions: {
+            '2016-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  folder/file1.txt: add\n  folder/file2.txt: add\n  file3.txt: add\n',
+              folder: {
+                'file1.txt': 'file1 contents',
+                'file2.txt': 'file2 contents'
+              },
+              'file3.txt': 'file3 contents'
+            }
+          }
+        }
+      });
+
+      const engine = new Engine();
+      const source = new FilesystemArchive('Test Archive', 'Archive');
+      source.getVersions()
+        .then(versions => engine.runRestore(source, versions[0], 'out'))
+        .then(() => {
+          expect(fs.readdirSync('out')).toEqualInAnyOrder(['Restore Summary.txt', 'folder', 'file3.txt']);
+          expect(fs.readdirSync('out/folder')).toEqualInAnyOrder(['file1.txt', 'file2.txt']);
+          expect(fs.readFileSync('out/folder/file1.txt', 'utf8')).toBe('file1 contents');
+          expect(fs.readFileSync('out/folder/file2.txt', 'utf8')).toBe('file2 contents');
+          expect(fs.readFileSync('out/file3.txt', 'utf8')).toBe('file3 contents');
+        })
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('restores files from previous revisions', (done) => {
+      MockFs({
+        out: {},
+        Archive: {
+          Versions: {
+            '2015-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n  file2.txt: add\n',
+              'file1.txt': 'file1 contents',
+              'file2.txt': 'file2 contents'
+            },
+            '2016-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: modify\n',
+              'file1.txt': 'file1 contents 2',
+            }
+          }
+        }
+      });
+
+      const engine = new Engine();
+      const source = new FilesystemArchive('Test Archive', 'Archive');
+      source.getVersions()
+        .then(versions => engine.runRestore(source, versions[0], 'out'))
+        .then(() => {
+          expect(fs.readdirSync('out')).toEqualInAnyOrder(['Restore Summary.txt', 'file1.txt', 'file2.txt']);
+          expect(fs.readFileSync('out/file1.txt', 'utf8')).toBe('file1 contents 2');
+          expect(fs.readFileSync('out/file2.txt', 'utf8')).toBe('file2 contents');
+        })
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('restores the latest version of modified files', (done) => {
+      MockFs({
+        out: {},
+        Archive: {
+          Versions: {
+            '2015-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n  file2.txt: add\n  file3.txt: add\n',
+              'file1.txt': 'file1 contents',
+              'file2.txt': 'file2 contents',
+              'file3.txt': 'file3 contents'
+            },
+            '2016-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: modify\n  file2.txt: modify\n',
+              'file1.txt': 'file1 contents 2',
+              'file2.txt': 'file2 contents 2',
+            },
+            '2017-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: modify\n',
+              'file1.txt': 'file1 contents 3'
+            }
+          }
+        }
+      });
+
+      const engine = new Engine();
+      const source = new FilesystemArchive('Test Archive', 'Archive');
+      source.getVersions()
+        .then(versions => engine.runRestore(source, versions[0], 'out'))
+        .then(() => {
+          expect(fs.readdirSync('out')).toEqualInAnyOrder(['Restore Summary.txt', 'file1.txt', 'file2.txt', 'file3.txt']);
+          expect(fs.readFileSync('out/file1.txt', 'utf8')).toBe('file1 contents 3');
+          expect(fs.readFileSync('out/file2.txt', 'utf8')).toBe('file2 contents 2');
+          expect(fs.readFileSync('out/file3.txt', 'utf8')).toBe('file3 contents');
+        })
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('does not restore deleted files', (done) => {
+      MockFs({
+        out: {},
+        Archive: {
+          Versions: {
+            '2015-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              'file1.txt': 'file1 contents'
+            },
+            '2016-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: delete\n'
+            }
+          }
+        }
+      });
+
+      const engine = new Engine();
+      const source = new FilesystemArchive('Test Archive', 'Archive');
+      source.getVersions()
+        .then(versions => engine.runRestore(source, versions[0], 'out'))
+        .then(() => {
+          expect(fs.readdirSync('out')).toEqual(['Restore Summary.txt']);
+        })
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('restores previously deleted files', (done) => {
+      MockFs({
+        out: {},
+        Archive: {
+          Versions: {
+            '2015-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              'file1.txt': 'file1 contents'
+            },
+            '2016-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: delete\n'
+            },
+            '2017-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              'file1.txt': 'file1 contents 2'
+            }
+          }
+        }
+      });
+
+      const engine = new Engine();
+      const source = new FilesystemArchive('Test Archive', 'Archive');
+      source.getVersions()
+        .then(versions => engine.runRestore(source, versions[0], 'out'))
+        .then(() => {
+          expect(fs.readdirSync('out')).toEqualInAnyOrder(['Restore Summary.txt', 'file1.txt']);
+          expect(fs.readFileSync('out/file1.txt', 'utf8')).toBe('file1 contents 2');
+        })
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('does not overwrite existing files', (done) => {
+      MockFs({
+        out: {
+          'file1.txt': 'derp'
+        },
+        Archive: {
+          Versions: {
+            '2015-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              'file1.txt': 'file1 contents'
+            }
+          }
+        }
+      });
+
+      const engine = new Engine();
+      const source = new FilesystemArchive('Test Archive', 'Archive');
+      source.getVersions()
+        .then(versions => engine.runRestore(source, versions[0], 'out'))
+        .then(() => fail('Expected error'))
+        .catch(err => expect(err).not.toBeUndefined())
+        .then(done);
+    });
+
+    it('restores only from the specified version', (done) => {
+      MockFs({
+        out: {},
+        Archive: {
+          Versions: {
+            '2015-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              'file1.txt': 'file1 contents'
+            },
+            '2016-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file2.txt: add\n',
+              'file2.txt': 'file2 contents'
+            },
+            '2017-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file3.txt: add\n  file2.txt: modify\n',
+              'file2.txt': 'file2 contents 2',
+              'file3.txt': 'file3 contents'
+            }
+          }
+        }
+      });
+
+      const engine = new Engine();
+      const source = new FilesystemArchive('Test Archive', 'Archive');
+      source.getVersions()
+        .then(versions => engine.runRestore(source, versions[1], 'out')) // second to last - 2016
+        .then(() => {
+          expect(fs.readdirSync('out')).toEqualInAnyOrder(['Restore Summary.txt', 'file1.txt', 'file2.txt']);
+          expect(fs.readFileSync('out/file1.txt', 'utf8')).toBe('file1 contents');
+          expect(fs.readFileSync('out/file2.txt', 'utf8')).toBe('file2 contents');
+        })
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('sends progress update callbacks', (done) => {
+      MockFs({
+        out: {},
+        Archive: {
+          Versions: {
+            '2015-01-01 00-00-00': {
+              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              'file1.txt': 'file1 contents'
+            }
+          }
+        }
+      });
+
+      let callbackCalled = false;
+      function callback(progress: number, message: string) {
+        expect(progress).toEqual(jasmine.any(Number));
+        expect(progress).toBeBetween([0, 1]);
+        expect(message).toEqual(jasmine.any(String));
+        callbackCalled = true;
+      }
+
+      const engine = new Engine();
+      const source = new FilesystemArchive('Test Archive', 'Archive');
+      source.getVersions()
+        .then(versions => engine.runRestore(source, versions[0], 'out', callback))
+        .catch(err => fail(err))
+        .then(() => {
+          if (!callbackCalled) fail('Callback was not called');
+          done();
+        });
+    });
   });
 });

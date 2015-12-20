@@ -199,14 +199,14 @@ describe('Source', () => {
   });
 
   describe('::_removeRootDirFromPath()', () => {
-    it('does not do anything to non-matching paths', () => {
-      const path = 'path/to/a/file.txt';
-      expect(Source._removeRootDirFromPath(path, 'root/dir')).toBe(path);
-    });
-
-    it('works', () => {
+    it('removes correct prefix', () => {
       const path = 'path/to/a/file.txt';
       expect(Source._removeRootDirFromPath(path, 'path/to')).toBe('a/file.txt');
+    });
+
+    it('does not change non-matching paths', () => {
+      const path = 'path/to/a/file.txt';
+      expect(Source._removeRootDirFromPath(path, 'root/dir')).toBe(path);
     });
 
     it('works with root path ending with "/"', () => {
