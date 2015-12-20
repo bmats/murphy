@@ -44,6 +44,7 @@
     "gulp-typescript": "^2.10.0",
     "gulp-util": "^3.0.7",
     "jasmine": "^2.4.1",
+    "jasmine-spec-reporter": "^2.4.0",
     "mock-fs": "^3.5.0",
     "mockdate": "^1.0.3",
     "stylus": "^0.52.4",

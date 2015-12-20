@@ -1,6 +1,7 @@
 import gulp from 'gulp';
 import gulpLoadPlugins from 'gulp-load-plugins';
 import Jasmine from 'jasmine';
+import SpecReporter from 'jasmine-spec-reporter';
 
 const $ = gulpLoadPlugins();
 
@@ -70,9 +71,14 @@ gulp.task('test-typescript', () => {
 });
 
 gulp.task('test', ['typescript', 'test-typescript'], () => {
-  var jasmine = new Jasmine();
-  jasmine.loadConfigFile('spec/support/jasmine.json');
-  jasmine.execute();
+  const runner = new Jasmine();
+  runner.configureDefaultReporter({ print: () => {} });
+  runner.jasmine.getEnv().addReporter(new SpecReporter({
+    displayStacktrace: 'summary',
+    displayPendingSpec: true
+  }));
+  runner.loadConfigFile('spec/support/jasmine.json');
+  runner.execute();
 });
 
 gulp.task('start', $.shell.task('electron .'));
