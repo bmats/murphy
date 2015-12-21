@@ -1,5 +1,6 @@
 {
   "name": "murphy",
+  "productName": "Murphy",
   "version": "0.1.0",
   "description": "Simple backup and restore.",
   "private": true,

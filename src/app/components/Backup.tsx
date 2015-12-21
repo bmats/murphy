@@ -43,7 +43,7 @@ export default class Backup extends React.Component<Props, State> {
       this.setState({
         isRunning: false
       });
-      alert('Backup error:\n' + arg.error);
+      dialog.showErrorBox('Backup error', arg);
     });
 
     this.state = {
@@ -63,6 +63,8 @@ export default class Backup extends React.Component<Props, State> {
   private get styles() {
     const padding: number = Theme.spacing.desktopGutter;
     return {
+      tab: {
+      },
       card: {
         position: 'relative',
         margin: padding,
@@ -176,7 +178,7 @@ export default class Backup extends React.Component<Props, State> {
     }
 
     return (
-      <div style={{height: '100%'}}>
+      <div style={this.styles.tab}>
         <MUI.Paper style={this.styles.card}>
           <div style={this.styles.leftSide}>
             <h2 style={this.styles.heading}>

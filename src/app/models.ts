@@ -5,3 +5,7 @@ export interface Source {
 export interface Archive {
   name: string;
 }
+
+export interface ArchiveVersion {
+  date: Date;
+}

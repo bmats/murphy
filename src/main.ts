@@ -23,7 +23,7 @@ app.on('window-all-closed', () => {
 // initialization and is ready to create browser windows.
 app.on('ready', () => {
   // Create the browser window
-  mainWindow = new BrowserWindow({ width: 800, height: 600, minWidth: 660, minHeight: 495 });
+  mainWindow = new BrowserWindow({ width: 800, height: 600, minWidth: 660, minHeight: 495, title: 'Murphy' });
   winston.info('Created BrowserWindow');
 
   connector = new BackupConnector(ipcMain, mainWindow.webContents);

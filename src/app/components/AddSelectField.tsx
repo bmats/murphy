@@ -35,7 +35,7 @@ export default class AddSelectField extends React.Component<Props, State> {
   }
 
   render() {
-    const items: {text: string; payload: number}[] = this.props.items.map((item, i) => {
+    const items: __MaterialUI.Menu.MenuItemRequest[] = this.props.items.map((item, i) => {
       return {
         text: item,
         payload: i

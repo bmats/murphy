@@ -312,9 +312,9 @@ class RestoreJob extends Job {
 
     return `Restored backup "${this.source.name}" at version ${versionDate} at ${time}.\r\n\r\nFiles:\r\n` +
       Object.keys(this.fileVersions).map(file => {
-        const fileVersionDate = this.fileVersions[file].date.toString();
+        const fileVersionDate = this.fileVersions[file].folderName;
         return `${file} (${fileVersionDate})\r\n`;
-      }).join();
+      }).join('');
   }
 }
 

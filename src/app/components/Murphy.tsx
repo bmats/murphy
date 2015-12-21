@@ -40,7 +40,7 @@ export default class Murphy extends React.Component<Props, State> {
           <Backup sources={this.props.sources} archives={this.props.archives} />
         </MUI.Tab>
         <MUI.Tab label="RESTORE">
-          <Restore />
+          <Restore archives={this.props.archives} />
         </MUI.Tab>
       </MUI.Tabs>
     );

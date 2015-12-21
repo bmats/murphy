@@ -26,8 +26,7 @@ export default class BackupConnector {
     ipcIn.on('start-restore', this.onStartRestore.bind(this));
     ipcIn.on('add-source', this.onAddSource.bind(this));
     ipcIn.on('add-archive', this.onAddArchive.bind(this));
-    ipcIn.on('request-sources', this.onRequestSources.bind(this));
-    ipcIn.on('request-archives', this.onRequestArchives.bind(this));
+    ipcIn.on('get-archive-versions', this.onRequestArchiveVersions.bind(this));
     this._ipcOut = ipcOut;
 
     this._engine = new Engine();
@@ -51,7 +50,7 @@ export default class BackupConnector {
 
     if (!source || !dest) {
       winston.error('Backup source or archive mismatch', { sourceName: arg.source.name, archiveName: arg.destination.name });
-      this._ipcOut.send('backup-error', 'Backup source or archive mismatch.');
+      this._ipcOut.send('backup-error', new Error('Source or archive mismatch.'));
       return;
     }
 
@@ -62,7 +61,7 @@ export default class BackupConnector {
       })
       .catch(err => {
         winston.error('Backup error', { error: err });
-        this._ipcOut.send('backup-error', err);
+        this._ipcOut.send('backup-error', err.toString());
       });
   }
 
@@ -75,12 +74,34 @@ export default class BackupConnector {
   }
 
   onStartRestore(event, arg): void {
-    this._engine.runRestore(arg.source, arg.version, arg.destination, this.onRestoreProgress.bind(this))
-      .then(() => { this._ipcOut.send('restore-complete', null) })
-      .catch((err) => { this._ipcOut.send('restore-error', err) });
+    const source = this._config.archives.find(a => a.name === arg.source.name);
+
+    // Find the correct archive version
+    arg.version.date = new Date(arg.version.date); // unserialize
+    let version;
+    source.getVersions()
+      .then(versions => {
+        version = versions.find(v => v.date.valueOf() === arg.version.date.valueOf());
+        if (!source || !version) {
+          winston.error('Restore archive or archive version mismatch', { archiveName: arg.source.name, versionDate: arg.version.date });
+          throw new Error('Archive or archive version mismatch.');
+        }
+      })
+
+      // Run the restore
+      .then(() => this._engine.runRestore(source, version, arg.destination, this.onRestoreProgress.bind(this)))
+      .then(() => {
+        winston.info('Restore complete');
+        this._ipcOut.send('restore-complete', null);
+      })
+      .catch((err) => {
+        winston.error('Restore error', { error: err });
+        this._ipcOut.send('restore-error', err.toString());
+      });
   }
 
   private onRestoreProgress(progress: number, message: string) {
+    winston.debug('Restore progress', { progress: progress, progressMessage: message });
     this._ipcOut.send('restore-progress', {
       progress: progress,
       message: message
@@ -104,12 +125,17 @@ export default class BackupConnector {
       });
   }
 
-  onRequestSources(event, arg): void {
-    this._ipcOut.send('response-sources', this._config.sources);
-  }
-
-  onRequestArchives(event, arg): void {
-    this._ipcOut.send('response-archives', this._config.archives);
+  onRequestArchiveVersions(event, appArchive): void {
+    const archive = this._config.archives.find(a => a.name === appArchive.name);
+    archive.getVersions()
+      .then(ver => this._ipcOut.send('archive-versions', {
+        archive: appArchive,
+        versions: ver.map(v => {
+          return {
+            date: v.date.valueOf() // serialize
+          };
+        })
+      }));
   }
 
   private _serializeConfig(): SerializedConfig {
