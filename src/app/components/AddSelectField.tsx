@@ -34,6 +34,17 @@ export default class AddSelectField extends React.Component<Props, State> {
     muiTheme: React.PropTypes.object
   }
 
+  private onValueChange(e: MUI.TouchTapEvent, index: number) {
+    if (index === this.props.items.length) {
+      if (this.props.onAdd) this.props.onAdd();
+    } else {
+      this.setState({
+        selectedIndex: index
+      });
+      if (this.props.onChange) this.props.onChange(this.props.items[index]);
+    }
+  }
+
   render() {
     const items: __MaterialUI.Menu.MenuItemRequest[] = this.props.items.map((item, i) => {
       return {
@@ -46,18 +57,7 @@ export default class AddSelectField extends React.Component<Props, State> {
       payload: items.length
     });
     return (items.length > 1)
-      ? <MUI.SelectField value={this.state.selectedIndex} menuItems={items} onChange={this._handleValueChange.bind(this)} />
+      ? <MUI.SelectField value={this.state.selectedIndex} menuItems={items} onChange={this.onValueChange.bind(this)} />
       : <MUI.FlatButton label={'Add ' + this.props.label} onClick={this.props.onAdd} />;
-  }
-
-  private _handleValueChange(e: MUI.TouchTapEvent, index: number) {
-    if (index === this.props.items.length) {
-      if (this.props.onAdd) this.props.onAdd();
-    } else {
-      this.setState({
-        selectedIndex: index
-      });
-      if (this.props.onChange) this.props.onChange(this.props.items[index]);
-    }
   }
 }

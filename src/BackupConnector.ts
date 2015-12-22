@@ -58,6 +58,7 @@ export default class BackupConnector {
       .then(() => {
         winston.info('Backup complete');
         this._ipcOut.send('backup-complete', null);
+        this.onLoadConfig(); // reload archives
       })
       .catch(err => {
         winston.error('Backup error', { error: err });
