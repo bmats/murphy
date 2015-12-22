@@ -2,6 +2,7 @@ import {remote, ipcRenderer} from 'electron';
 const dialog = remote.require('dialog');
 import * as _ from 'lodash';
 import * as React from 'react';
+import * as SwipeableView from 'react-swipeable-views';
 import * as MUI from 'material-ui';
 import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
 import Theme = require('./MurphyTheme');
@@ -18,7 +19,7 @@ interface Props {
 
 interface State {
   muiTheme?: MUI.Styles.MuiTheme;
-  tabIndex?: string;
+  tabIndex?: number;
 
   backup?: JobStatus;
   backupSource?: Source;
@@ -43,7 +44,7 @@ export default class Murphy extends React.Component<Props, State> {
 
     this.state = {
       muiTheme: ThemeManager.getMuiTheme(require('./MurphyTheme')),
-      tabIndex: '0',
+      tabIndex: 0,
 
       backup: new JobStatus(),
       backupSource: props.sources[props.sources.length - 1],
@@ -130,9 +131,9 @@ export default class Murphy extends React.Component<Props, State> {
   }
 
   private onStart() {
-    if (this.state.tabIndex === '0') {
+    if (this.state.tabIndex === 0) {
       this.onStartBackup();
-    } else if (this.state.tabIndex === '1') {
+    } else if (this.state.tabIndex === 1) {
       this.onStartRestore();
     }
   }
@@ -167,7 +168,7 @@ export default class Murphy extends React.Component<Props, State> {
   }
 
   private onTabChange(index) {
-    this.setState({ tabIndex: index });
+    this.setState({ tabIndex: Number(index) });
   }
 
   private onBackupSourceChange(newSource: Source) {
@@ -191,9 +192,9 @@ export default class Murphy extends React.Component<Props, State> {
   }
 
   private get isRunReady(): boolean {
-    if (this.state.tabIndex === '0') {
+    if (this.state.tabIndex === 0) {
       return !this.state.backup.isRunning && !!this.state.backupSource && !!this.state.backupArchive;
-    } else if (this.state.tabIndex === '1') {
+    } else if (this.state.tabIndex === 1) {
       return !this.state.restore.isRunning && !!this.state.restoreArchive && !!this.state.restoreVersion && !!this.state.restoreDestination;
     }
     return false;
@@ -220,14 +221,14 @@ export default class Murphy extends React.Component<Props, State> {
 
     return (
       <div>
-        <MUI.Tabs value={this.state.tabIndex} onChange={this.onTabChange.bind(this)}>
-          <MUI.Tab label="BACKUP" value="0">
-            <CardScroller cards={backupCards} />
-          </MUI.Tab>
-          <MUI.Tab label="RESTORE" value="1">
-            <CardScroller cards={restoreCards} />
-          </MUI.Tab>
+        <MUI.Tabs value={this.state.tabIndex + ''} onChange={this.onTabChange.bind(this)}>
+          <MUI.Tab label="BACKUP" value="0" />
+          <MUI.Tab label="RESTORE" value="1" />
         </MUI.Tabs>
+        <SwipeableView index={this.state.tabIndex} onChangeIndex={this.onTabChange.bind(this)}>
+          <CardScroller cards={backupCards} />
+          <CardScroller cards={restoreCards} />
+        </SwipeableView>
         <MUI.FloatingActionButton style={this.styles.runButton} onClick={this.onStart.bind(this)} disabled={!this.isRunReady}>
           <MUI.SvgIcon color={this.isRunReady ? undefined : 'rgba(0, 0, 0, 0.3)'}>
             <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
