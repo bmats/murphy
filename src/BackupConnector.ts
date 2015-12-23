@@ -128,6 +128,8 @@ export default class BackupConnector {
 
   onRequestArchiveVersions(event, appArchive): void {
     const archive = this._config.archives.find(a => a.name === appArchive.name);
+    if (!archive) return;
+
     archive.getVersions()
       .then(ver => this._ipcOut.send('archive-versions', {
         archive: appArchive,
