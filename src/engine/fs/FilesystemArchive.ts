@@ -65,25 +65,11 @@ export default class FilesystemArchive extends Archive {
           reject(new Error('Error creating archive folder'));
         });
     }).then(() => new Promise<void>((resolve, reject) => {
-      // Make sure folder is empty
-      readdirAsync(this.path)
-        .then(files => {
-          if (files.length === 0) {
-            resolve();
-          } else {
-            winston.error('Archive folder is not empty', { path: this.path });
-            reject(new Error('Archive folder is not empty'));
-          }
-        })
-        .catch((err) => {
-          winston.error('Error reading archive folder', { path: this.path, error: err });
-          reject(new Error('Error reading archive folder'));
-        });
-    })).then(() => new Promise<void>((resolve, reject) => {
       // Make archive structure
-      writeFileAsync(this.path + DIRSEP + README_FILENAME, this.getReadMeText())
-        .then(() => mkdirAsync(this.path + DIRSEP + LATEST_FOLDER))
-        .then(() => mkdirAsync(this.path + DIRSEP + VERSIONS_FOLDER))
+      writeFileAsync(this.path + DIRSEP + README_FILENAME, this.getReadMeText(), { flag: 'wx' }) // don't overwrite
+        .catch(err => { winston.error('Error writing readme (already exists?)', { error: err }) })
+        .then(() => mkdirpAsync(this.path + DIRSEP + LATEST_FOLDER))
+        .then(() => mkdirpAsync(this.path + DIRSEP + VERSIONS_FOLDER))
         .then(resolve)
         .catch((err) => {
           winston.error('Error building archive', { error: err });

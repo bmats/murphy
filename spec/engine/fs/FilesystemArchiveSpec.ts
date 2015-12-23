@@ -48,18 +48,29 @@ describe('FilesystemArchive', () => {
       expect(versions.isDirectory()).toBe(true);
     });
 
-    it('fails when the folder is not empty', (done) => {
-      const existingFolder = 'Existing';
+    it('does not modify an existing archive', (done) => {
       MockFs({
-        [existingFolder]: {
-          'somefile.txt': ''
+        Existing: {
+          Latest: {
+            'file1.txt': 'not modified'
+          },
+          Versions: {
+            'file2.txt': 'not modified',
+          },
+          'READ ME.txt': 'not modified'
         }
       });
 
-      const archive = new FilesystemArchive('Test Archive', existingFolder);
+      const archive = new FilesystemArchive('Test Archive', 'Existing');
       archive.init()
-        .then(() => fail('Expected error'))
-        .catch((err) => expect(err).not.toBeUndefined())
+        .then(() => {
+          expect(fs.readdirSync('Existing/Latest')).toEqual(['file1.txt']);
+          expect(fs.readdirSync('Existing/Versions')).toEqual(['file2.txt']);
+          expect(fs.readFileSync('Existing/READ ME.txt', 'utf8')).toBe('not modified');
+          expect(fs.readFileSync('Existing/Latest/file1.txt', 'utf8')).toBe('not modified');
+          expect(fs.readFileSync('Existing/Versions/file2.txt', 'utf8')).toBe('not modified');
+        })
+        .catch((err) => fail(err))
         .then(done);
     });
   });
