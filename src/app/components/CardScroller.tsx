@@ -9,28 +9,11 @@ interface Props {
   cards: React.ReactElement<any>[];
 }
 
-interface State {
-  height?: number;
-}
-
-export default class CardScroller extends React.Component<Props, State> {
+export default class CardScroller extends React.Component<Props, {}> {
   constructor(props: Props) {
     super(props);
 
     this.state = {};
-  }
-
-  componentDidUpdate(prevProps: Props, prevState: State) {
-    const node = ReactDOM.findDOMNode(this);
-
-    // Calculate the actual container height (for use in SwipeableView)
-    let height = (node.childElementCount + 1) * Theme.spacing.desktopGutter;
-    for (let i = 0; i < node.children.length; ++i) {
-      height += node.children[i].clientHeight;
-    }
-    if (height !== this.state.height) {
-      this.setState({ height: height });
-    }
   }
 
   static childContextTypes: any = {
@@ -43,9 +26,12 @@ export default class CardScroller extends React.Component<Props, State> {
       tab: {
         overflow: 'visible'
       },
+      cardSpacer: {
+        height: padding
+      },
       card: {
         position: 'relative',
-        margin: padding,
+        margin: `0 ${padding}px`,
         padding: padding,
       }
     };
@@ -54,15 +40,17 @@ export default class CardScroller extends React.Component<Props, State> {
   render() {
     const cardElements = [];
     this.props.cards.forEach((component, i) => {
+      cardElements.push(<div key={`spacer-${i}`} style={this.styles.cardSpacer}></div>);
       cardElements.push(
         <MUI.Paper key={i} style={this.styles.card}>
           {component}
         </MUI.Paper>
       );
     });
+    cardElements.push(<div key="spacer-last" style={this.styles.cardSpacer}></div>);
 
     return (
-      <div style={_.extend(this.styles.tab, { height: this.state.height })}>
+      <div style={this.styles.tab}>
         {cardElements}
       </div>
     );
