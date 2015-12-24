@@ -53,7 +53,7 @@ abstract class Job {
     this._stop = true;
   }
 
-  abstract start(): Promise<void>;
+  abstract start(): Promise<any>;
 }
 
 class BackupJob extends Job {
@@ -88,7 +88,7 @@ class BackupJob extends Job {
     return this._destination;
   }
 
-  start(): Promise<void> {
+  start(): Promise<ArchiveVersion> {
     // Get existing archive versions
     this.updateStatus(this._progress.value, 'Reading backup');
     return this.destination.getVersions() // newest first
@@ -111,7 +111,8 @@ class BackupJob extends Job {
       .then(() => this.newVersion.apply())
       .then(() => { this.updateStatus(this._progress.advance().value, 'Saving backup') })
       .then(() => this.destination.rebuild())
-      .then(() => { this.updateStatus(1, 'Backup complete') });
+      .then(() => { this.updateStatus(1, 'Backup complete') })
+      .then(() => this.newVersion);
   }
 
   /**
@@ -185,7 +186,7 @@ class BackupJob extends Job {
 
 class RestoreJob extends Job {
   private versions: ArchiveVersion[];
-  private fileVersions: {[file: string]: ArchiveVersion }[] = {};
+  private fileVersions: {[file: string]: ArchiveVersion } = {};
 
   private _source: Archive;
   private _version: ArchiveVersion;
@@ -308,11 +309,11 @@ class RestoreJob extends Job {
 
   private _getSummaryText() {
     const time: string = new Date().toString();
-    const versionDate: string = this.version.date.toString();
+    const versionDate: string = this.version.date.toString(); // TODO: format nicely
 
     return `Restored backup "${this.source.name}" at version ${versionDate} at ${time}.\r\n\r\nFiles:\r\n` +
       Object.keys(this.fileVersions).map(file => {
-        const fileVersionDate = this.fileVersions[file].folderName;
+        const fileVersionDate = this.fileVersions[file].date.toString(); // TODO: format nicely
         return `${file} (${fileVersionDate})\r\n`;
       }).join('');
   }
@@ -325,14 +326,20 @@ export default class Engine {
   constructor() {
   }
 
-  runBackup(source: Source, destination: Archive, progressCallback?: ProgressCallback): Promise<void> {
+  runBackup(source: Source, destination: Archive, progressCallback?: ProgressCallback): Promise<ArchiveVersion> {
     if (this._jobCount > 0)
       throw new Error('Cannot run more than one job at a time.');
     ++this._jobCount;
 
     const job = new BackupJob(source, destination, progressCallback);
     return job.start()
-      .then(() => { --this._jobCount });
+      .then(version => {
+        --this._jobCount;
+        return version;
+      }, err => {
+        --this._jobCount;
+        throw err;
+      });
   }
 
   runRestore(source: Archive, version: ArchiveVersion, destination: string, progressCallback?: ProgressCallback): Promise<void> {
@@ -342,6 +349,9 @@ export default class Engine {
 
     const job = new RestoreJob(source, version, destination, progressCallback);
     return job.start()
-      .then(() => { --this._jobCount });
+      .then(() => { --this._jobCount }, err => {
+        --this._jobCount;
+        throw err;
+      });
   }
 }

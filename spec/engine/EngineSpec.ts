@@ -279,6 +279,28 @@ describe('Engine', () => {
           done();
         });
     });
+
+    it('returns the new ArchiveVersion', (done) => {
+      MockFs({
+        Source: {},
+        Archive: {
+          Latest: {},
+          Versions: {}
+        }
+      });
+
+      const engine = new Engine();
+      const source = new Source('Test Source', ['Source']);
+      const archive = new FilesystemArchive('Test Archive', 'Archive');
+      let newVersion: ArchiveVersion;
+      engine.runBackup(source, archive)
+        .then((version) => {
+          expect(version instanceof ArchiveVersion).toBe(true);
+          expect(version.date).toEqual(new Date());
+        })
+        .catch(err => fail(err))
+        .then(done);
+    });
   });
 
   describe('.runRestore()', () => {
