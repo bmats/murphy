@@ -1,3 +1,4 @@
+import { dialog, shell } from 'electron';
 import { EventEmitter } from 'events';
 import * as winston from 'winston';
 import Config from './engine/Config';
@@ -27,6 +28,7 @@ export default class BackupConnector {
     ipcIn.on('add-source', this.onAddSource.bind(this));
     ipcIn.on('add-archive', this.onAddArchive.bind(this));
     ipcIn.on('get-archive-versions', this.onRequestArchiveVersions.bind(this));
+    ipcIn.on('open-archive', this.onOpenArchive.bind(this));
     this._ipcOut = ipcOut;
 
     this._engine = new Engine();
@@ -55,9 +57,14 @@ export default class BackupConnector {
     }
 
     this._engine.runBackup(source, dest, this.onBackupProgress.bind(this))
-      .then(() => {
+      .then(version => version.getFiles())
+      .then(files => {
         winston.info('Backup complete');
-        this._ipcOut.send('backup-complete', null);
+        this._ipcOut.send('backup-complete', {
+          stats: {
+            count: files.length
+          }
+        });
         this.onLoadConfig(); // reload archives
       })
       .catch(err => {
@@ -142,6 +149,30 @@ export default class BackupConnector {
           };
         })
       }));
+  }
+
+  onOpenArchive(event, appArchive): void {
+    const archive = this._config.archives.find(a => a.name === appArchive.name);
+    if (!archive) {
+      winston.error('Error mapping app archive to archive', { appArchive: appArchive, archives: this._config.archives });
+      dialog.showMessageBox({
+        type: 'error',
+        buttons: ['OK'],
+        message: 'Error finding archive.'
+      });
+      return;
+    }
+
+    if (archive instanceof FilesystemArchive) {
+      shell.openItem(archive.path);
+    } else {
+      winston.warn('Unknown archive type', { archive: archive });
+      dialog.showMessageBox({
+        type: 'error',
+        buttons: ['OK'],
+        message: 'Unknown archive type.'
+      });
+    }
   }
 
   private _serializeConfig(): SerializedConfig {

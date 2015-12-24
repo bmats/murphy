@@ -1,4 +1,4 @@
-import {remote, ipcRenderer} from 'electron';
+import {remote, ipcRenderer, shell} from 'electron';
 const dialog = remote.require('dialog');
 import * as _ from 'lodash';
 import * as React from 'react';
@@ -11,6 +11,7 @@ import CardScroller from './CardScroller';
 import BackupConfig from './BackupConfig';
 import RestoreConfig from './RestoreConfig';
 import ProgressCard from './ProgressCard';
+import MessageActionCard from './MessageActionCard';
 
 interface Props {
   sources: Source[];
@@ -24,6 +25,7 @@ interface State {
   backup?: JobStatus;
   backupSource?: Source;
   backupArchive?: Archive;
+  backupStats?: { count: number };
 
   restore?: JobStatus;
   restoreArchive?: Archive;
@@ -91,12 +93,13 @@ export default class Murphy extends React.Component<Props, State> {
           progressMessage: arg.message
         })
       });
-    }, 50));
+    }, 200));
     ipcRenderer.on('backup-complete', (event, arg) => {
       this.setState({
         backup: _.extend(this.state.backup, {
           isRunning: false
-        })
+        }),
+        backupStats: arg.stats
       });
     });
     ipcRenderer.on('backup-error', (event, arg) => {
@@ -119,7 +122,7 @@ export default class Murphy extends React.Component<Props, State> {
           progressMessage: arg.message
         })
       });
-    }, 50));
+    }, 200));
     ipcRenderer.on('restore-complete', (event, arg) => {
       this.setState({
         restore: _.extend(this.state.restore, {
@@ -202,6 +205,14 @@ export default class Murphy extends React.Component<Props, State> {
     this.setState({ restoreDestination: newDestination });
   }
 
+  private onOpenBackup() {
+    ipcRenderer.send('open-archive', this.state.backupArchive);
+  }
+
+  private onOpenRestore() {
+    shell.openItem(this.state.restoreDestination);
+  }
+
   private get isRunReady(): boolean {
     if (this.state.tabIndex === 0) {
       return !this.state.backup.isRunning && !!this.state.backupSource && !!this.state.backupArchive;
@@ -218,7 +229,14 @@ export default class Murphy extends React.Component<Props, State> {
         onSourceChange={this.onBackupSourceChange.bind(this)} onArchiveChange={this.onBackupArchiveChange.bind(this)} />
     ];
     if (this.state.backup.hasRun) {
-      backupCards.push(<ProgressCard key="progress" progress={this.state.backup.progress} message={this.state.backup.progressMessage} error={this.state.backup.hasError} />);
+      backupCards.push(<ProgressCard key="progress" progress={this.state.backup.progress}
+        message={this.state.backup.progressMessage} error={this.state.backup.hasError} />);
+    }
+    if (this.state.backup.hasRun && !this.state.backup.isRunning && !this.state.backup.hasError) {
+      const backupResultMessage = this.state.backupStats.count +
+        ' file change' + (this.state.backupStats.count !== 1 ? 's' : '') + ' backed up.';
+      backupCards.push(<MessageActionCard message={backupResultMessage}
+        actionLabel="Open Backup Folder" onClick={this.onOpenBackup.bind(this)} />);
     }
 
     const restoreCards = [
@@ -228,6 +246,10 @@ export default class Murphy extends React.Component<Props, State> {
     ];
     if (this.state.restore.hasRun) {
       restoreCards.push(<ProgressCard key="progress" progress={this.state.restore.progress} message={this.state.restore.progressMessage} error={this.state.restore.hasError} />);
+    }
+    if (this.state.restore.hasRun && !this.state.restore.isRunning && !this.state.restore.hasError) {
+      restoreCards.push(<MessageActionCard message="Restore completed."
+        actionLabel="Open Restore Folder" onClick={this.onOpenRestore.bind(this)} />);
     }
 
     return (
