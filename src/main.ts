@@ -17,7 +17,14 @@ app.on('window-all-closed', () => app.quit());
 // initialization and is ready to create browser windows.
 app.on('ready', () => {
   // Create the browser window
-  mainWindow = new BrowserWindow({ width: 800, height: 600, minWidth: 660, minHeight: 495, title: app.getName() });
+  mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    minWidth: 650,
+    minHeight: 350,
+    title: app.getName(),
+    autoHideMenuBar: true
+  });
   winston.info('Created BrowserWindow');
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(require('./menu')));
