@@ -32,10 +32,11 @@ interface State {
 }
 
 class JobStatus {
-  isRunning: boolean;
-  hasRun: boolean;
-  progress: number;
-  progressMessage: string;
+  isRunning: boolean = false;
+  hasRun: boolean = false;
+  hasError: boolean = false;
+  progress: number = 0;
+  progressMessage: string = null;
 }
 
 export default class Murphy extends React.Component<Props, State> {
@@ -82,6 +83,8 @@ export default class Murphy extends React.Component<Props, State> {
 
   private registerIpcCallbacks() {
     ipcRenderer.on('backup-progress', _.throttle((event, arg) => {
+      if (this.state.backup.hasError) return;
+
       this.setState({
         backup: _.extend(this.state.backup, {
           progress: arg.progress,
@@ -99,13 +102,17 @@ export default class Murphy extends React.Component<Props, State> {
     ipcRenderer.on('backup-error', (event, arg) => {
       this.setState({
         backup: _.extend(this.state.backup, {
-          isRunning: false
+          isRunning: false,
+          hasError: true,
+          progressMessage: arg
         })
       });
       dialog.showErrorBox('Backup error', arg);
     });
 
     ipcRenderer.on('restore-progress', _.throttle((event, arg) => {
+      if (this.state.restore.hasError) return;
+
       this.setState({
         restore: _.extend(this.state.restore, {
           progress: arg.progress,
@@ -123,7 +130,9 @@ export default class Murphy extends React.Component<Props, State> {
     ipcRenderer.on('restore-error', (event, arg) => {
       this.setState({
         restore: _.extend(this.state.restore, {
-          isRunning: false
+          isRunning: false,
+          hasError: true,
+          progressMessage: arg
         })
       });
       dialog.showErrorBox('Restore error', arg);
@@ -142,6 +151,7 @@ export default class Murphy extends React.Component<Props, State> {
     const newBackup = this.state.backup;
     newBackup.isRunning = true;
     newBackup.hasRun = true;
+    newBackup.hasError = false;
     this.setState({
       backup: newBackup
     });
@@ -156,6 +166,7 @@ export default class Murphy extends React.Component<Props, State> {
     const newRestore = this.state.restore;
     newRestore.isRunning = true;
     newRestore.hasRun = true;
+    newRestore.hasError = false;
     this.setState({
       restore: newRestore
     });
@@ -207,7 +218,7 @@ export default class Murphy extends React.Component<Props, State> {
         onSourceChange={this.onBackupSourceChange.bind(this)} onArchiveChange={this.onBackupArchiveChange.bind(this)} />
     ];
     if (this.state.backup.hasRun) {
-      backupCards.push(<ProgressCard key="progress" progress={this.state.backup.progress} message={this.state.backup.progressMessage} />);
+      backupCards.push(<ProgressCard key="progress" progress={this.state.backup.progress} message={this.state.backup.progressMessage} error={this.state.backup.hasError} />);
     }
 
     const restoreCards = [
@@ -216,7 +227,7 @@ export default class Murphy extends React.Component<Props, State> {
         onArchiveChange={this.onRestoreArchiveChange.bind(this)} onVersionChange={this.onRestoreVersionChange.bind(this)} onDestinationChange={this.onRestoreDestinationChange.bind(this)} />
     ];
     if (this.state.restore.hasRun) {
-      restoreCards.push(<ProgressCard key="progress" progress={this.state.restore.progress} message={this.state.restore.progressMessage} />);
+      restoreCards.push(<ProgressCard key="progress" progress={this.state.restore.progress} message={this.state.restore.progressMessage} error={this.state.restore.hasError} />);
     }
 
     return (

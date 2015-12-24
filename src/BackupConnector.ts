@@ -128,7 +128,10 @@ export default class BackupConnector {
 
   onRequestArchiveVersions(event, appArchive): void {
     const archive = this._config.archives.find(a => a.name === appArchive.name);
-    if (!archive) return;
+    if (!archive) {
+      winston.error('Error mapping app archive to archive', { appArchive: appArchive, archives: this._config.archives });
+      return;
+    }
 
     archive.getVersions()
       .then(ver => this._ipcOut.send('archive-versions', {
