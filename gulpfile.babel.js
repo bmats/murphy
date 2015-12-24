@@ -7,7 +7,7 @@ const $ = gulpLoadPlugins();
 
 const paths = {
   typescript: 'src/**/*',
-  static: 'static/*.*',
+  static: ['static/**/*', '!static/styles/*'],
   styles: 'static/styles/*',
   build: './build',
   spec: 'spec/**/*.ts'
@@ -40,7 +40,7 @@ gulp.task('stylus', () => {
       compress: false
     }).on('error', logError))
     .pipe($.concat('all.css'))
-    .pipe(gulp.dest(paths.build + '/static'))
+    .pipe(gulp.dest(paths.build + '/static/styles'))
     .pipe($.livereload());
 });
 
