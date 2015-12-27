@@ -17,11 +17,12 @@ interface SerializedConfig {
 }
 
 export default class BackupConnector {
+  private _window: GitHubElectron.BrowserWindow;
   private _ipcOut: Sendable;
   private _engine: Engine;
   private _config: Config;
 
-  constructor(ipcIn: EventEmitter, ipcOut: Sendable) {
+  constructor(ipcIn: EventEmitter, browserWindow: GitHubElectron.BrowserWindow) {
     ipcIn.on('load-config', this.onLoadConfig.bind(this));
     ipcIn.on('start-backup', this.onStartBackup.bind(this));
     ipcIn.on('start-restore', this.onStartRestore.bind(this));
@@ -29,7 +30,8 @@ export default class BackupConnector {
     ipcIn.on('add-archive', this.onAddArchive.bind(this));
     ipcIn.on('get-archive-versions', this.onRequestArchiveVersions.bind(this));
     ipcIn.on('open-archive', this.onOpenArchive.bind(this));
-    this._ipcOut = ipcOut;
+    this._window = browserWindow;
+    this._ipcOut = browserWindow.webContents;
 
     this._engine = new Engine();
   }
@@ -70,11 +72,13 @@ export default class BackupConnector {
       .catch(err => {
         winston.error('Backup error', { error: err });
         this._ipcOut.send('backup-error', err.toString());
-      });
+      })
+      .then(() => { this._window.setProgressBar(-1) }); // remove
   }
 
   private onBackupProgress(progress: number, message: string) {
     winston.debug('Backup progress', { progress: progress, progressMessage: message });
+    this._window.setProgressBar(progress);
     this._ipcOut.send('backup-progress', {
       progress: progress,
       message: message
@@ -105,11 +109,13 @@ export default class BackupConnector {
       .catch((err) => {
         winston.error('Restore error', { error: err });
         this._ipcOut.send('restore-error', err.toString());
-      });
+      })
+      .then(() => { this._window.setProgressBar(-1) }); // remove
   }
 
   private onRestoreProgress(progress: number, message: string) {
     winston.debug('Restore progress', { progress: progress, progressMessage: message });
+    this._window.setProgressBar(progress);
     this._ipcOut.send('restore-progress', {
       progress: progress,
       message: message

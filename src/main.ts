@@ -7,8 +7,8 @@ winston.add(winston.transports.File, { filename: 'murphy.log', level: 'debug' })
 // electron.crashReporter.start();
 
 // Keep a global reference of the window object
-let mainWindow;
-let connector;
+let mainWindow: GitHubElectron.BrowserWindow;
+let connector: BackupConnector;
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => app.quit());
@@ -29,7 +29,7 @@ app.on('ready', () => {
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(require('./menu')));
 
-  connector = new BackupConnector(ipcMain, mainWindow.webContents);
+  connector = new BackupConnector(ipcMain, mainWindow);
 
   mainWindow.loadURL(`file://${__dirname}/../static/index.html`);
 
