@@ -146,17 +146,27 @@ describe('Engine', () => {
     it('marks files which have been previously deleted as new', (done) => {
       MockFs({
         Source: {
-          'file3.txt': ''
+          'file3.txt': '',
+          'file4.txt': 'modified'
         },
         Archive: {
           Latest: {},
           Versions: {
+            '2014-01-01 12-00-01': {
+              '.index': 'source: My Computer\nfiles:\n  file4.txt: add\n',
+              'file4.txt': ''
+            },
             '2015-01-01 12-00-01': {
-              '.index': 'source: My Computer\nfiles:\n  file3.txt: add\n',
+              '.index': 'source: My Computer\nfiles:\n  file3.txt: add\n  file4.txt: delete\n',
               'file3.txt': ''
             },
             '2016-01-01 12-00-01': {
-              '.index': 'source: My Computer\nfiles:\n  file3.txt: delete\n'
+              '.index': 'source: My Computer\nfiles:\n  file3.txt: delete\n  file5.txt: add\n',
+              'file5.txt': ''
+            },
+            '2017-01-01 12-00-01': {
+              '.index': 'source: My Computer\nfiles:\n  file4.txt: add\n  file5.txt: delete\n',
+              'file4.txt': ''
             }
           }
         }
@@ -172,6 +182,10 @@ describe('Engine', () => {
 
         .then(() => newVersion.getFileStatus('file3.txt'))
         .then(status => expect(status).toBe('add'))
+        .then(() => newVersion.getFileStatus('file4.txt'))
+        .then(status => expect(status).toBe('modify'))
+        .then(() => newVersion.getFileStatus('file5.txt'))
+        .then(status => expect(status).toBeUndefined())
 
         .catch(err => fail(err))
         .then(done);

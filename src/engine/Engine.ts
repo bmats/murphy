@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as Promise from 'bluebird';
@@ -165,7 +166,7 @@ class BackupJob extends Job {
   }
 
   /**
-   * Check for files in previous version that are not in the source, and mark as deleted.
+   * Check for files in previous versions that are not in the source, and mark as deleted.
    */
   private writeDeletedFiles(): Promise<any> {
     // If there are no previous versions (just the new version), skip this
@@ -174,13 +175,23 @@ class BackupJob extends Job {
 
     this.updateStatus(this._progress.advance().value, 'Looking for deleted files');
 
-    return this.versions[1].getFiles() // new version is at [0]
-      .then(prevFiles => Promise.map(prevFiles, file => {
-        if (this.sourceFiles.indexOf(file) < 0) {
-          // File not found, so it was deleted
-          return this.newVersion.writeFile(file, 'delete');
-        }
-      }));
+    const foundFiles: {[file: string]: boolean} = {};
+    return Promise.map(this.versions.slice(1), version => // newest version is at [0]
+      version.getFiles()
+        .then(prevFiles => Promise.map(prevFiles, file =>
+          version.getFileStatus(file)
+            .then(status => {
+              if (!(file in foundFiles)) {
+                foundFiles[file] = true;
+
+                if (_.contains(['add', 'modify'], status) && this.sourceFiles.indexOf(file) < 0) {
+                  // File not found, so it was deleted
+                  return this.newVersion.writeFile(file, 'delete');
+                }
+              }
+            })
+        ))
+    );
   }
 }
 
