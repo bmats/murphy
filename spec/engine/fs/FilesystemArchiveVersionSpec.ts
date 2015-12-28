@@ -180,7 +180,7 @@ describe('FilesystemArchiveVersion', () => {
     });
   });
 
-  describe('.writeFileStream()', () => {
+  describe('.writeFile()', () => {
     const contents = 'The quick brown fox jumps over the lazy dog';
 
     beforeEach(() => {
@@ -222,15 +222,18 @@ describe('FilesystemArchiveVersion', () => {
       };
     }
 
-    it('writes new file to version and adds to index', testWriteFile('file_added.txt', 'add'));
-    it('writes modified file to version and adds to index', testWriteFile('file_modified.txt', 'modify'));
+    it('writes new file to version and adds to index', testWriteFile('folder1/file_added.txt', 'add'));
+    it('writes modified file to version and adds to index', testWriteFile('folder2/file_modified.txt', 'modify'));
 
     it('adds deleted file in index', (done) => {
       const version = new FilesystemArchiveVersion(new Date(), 'Archive');
       version.load()
-        .then(() => version.writeFile('file_deleted.txt', 'delete'))
-        .then(() => version.getFileStatus('file_deleted.txt'))
+        .then(() => version.writeFile('folder3/file_deleted.txt', 'delete'))
+        .then(() => version.getFileStatus('folder3/file_deleted.txt'))
         .then(status => expect(status).toBe('delete'))
+        .then(() => expect(
+          fs.statSync('Archive/Versions/2018-01-11 05-00-00/folder3/file_deleted.txt.deleted')
+            .size).toBe(0)) // exists and empty
         .catch(err => fail(err))
         .then(done);
     });

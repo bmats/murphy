@@ -10,6 +10,7 @@ import {checkPathDoesNotExist, hashStream, mkdirAsync, mkdirpAsync, readFileAsyn
 const FOLDER_NAME_REGEX = /(\d{4})-(\d{2})-(\d{2}) (\d{2})-(\d{2})-(\d{2})/;
 const VERSIONS_FOLDER: string = 'Versions';
 const INDEX_FILE: string = '.index';
+const DELETED_SUFFIX: string = '.deleted';
 
 interface FileIndex {
   [file: string]: string;
@@ -101,13 +102,13 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
     // Save status to index (will be written to file in apply())
     this._index[file] = status;
 
+    const filePath = this.folderPath + DIRSEP + file;
     switch (status) {
     case 'add':
     case 'modify':
       if (!readStream)
         throw new Error(`readStream required for "${status}" status`);
 
-      const filePath = this.folderPath + DIRSEP + file;
       return Promise.all([
         mkdirpAsync(path.dirname(filePath)),
         checkPathDoesNotExist(filePath)
@@ -132,8 +133,10 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
       }));
 
     case 'delete':
-      // TODO: write empty file or "{filename}.deleted"?
-      return Promise.resolve();
+      // Write an empty "{filename}.deleted" file
+      return mkdirpAsync(path.dirname(filePath + DELETED_SUFFIX))
+        .then(() => writeFileAsync(filePath + DELETED_SUFFIX, ''))
+        .then(() => {});
     }
   }
 
