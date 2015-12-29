@@ -2,7 +2,7 @@ import {remote, ipcRenderer, shell} from 'electron';
 const dialog = remote.require('dialog');
 import * as _ from 'lodash';
 import * as React from 'react';
-import * as SwipeableView from 'react-swipeable-views';
+import SwipeableViews from './SwipeableViewsMaxHeight';
 import * as MUI from 'material-ui';
 import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
 import Theme = require('./MurphyTheme');
@@ -75,6 +75,16 @@ export default class Murphy extends React.Component<Props, State> {
   private get styles() {
     const padding: number = Theme.spacing.desktopGutter;
     return {
+      container: {
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%'
+      },
+      tabs: {
+      },
+      tabView: {
+        flexGrow: 1
+      },
       runButton: {
         position: 'fixed',
         right: padding,
@@ -253,15 +263,15 @@ export default class Murphy extends React.Component<Props, State> {
     }
 
     return (
-      <div>
-        <MUI.Tabs value={this.state.tabIndex + ''} onChange={this.onTabChange.bind(this)}>
+      <div style={this.styles.container}>
+        <MUI.Tabs value={this.state.tabIndex + ''} onChange={this.onTabChange.bind(this)} style={this.styles.tabs}>
           <MUI.Tab label="BACKUP" value="0" />
           <MUI.Tab label="RESTORE" value="1" />
         </MUI.Tabs>
-        <SwipeableView index={this.state.tabIndex} onChangeIndex={this.onTabChange.bind(this)}>
+        <SwipeableViews index={this.state.tabIndex} onChangeIndex={this.onTabChange.bind(this)} style={this.styles.tabView}>
           <CardScroller cards={backupCards} />
           <CardScroller cards={restoreCards} />
-        </SwipeableView>
+        </SwipeableViews>
         <MUI.FloatingActionButton style={this.styles.runButton} onClick={this.onStart.bind(this)} disabled={!this.isRunReady}>
           <MUI.SvgIcon color={this.isRunReady ? undefined : 'rgba(0, 0, 0, 0.3)'}>
             <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />

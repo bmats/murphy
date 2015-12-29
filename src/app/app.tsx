@@ -1,6 +1,6 @@
 import {ipcRenderer} from 'electron';
 import * as React from 'react';
-const ReactDOM = require('react-dom');
+import * as ReactDOM from 'react-dom';
 import * as utils from './utils';
 import Murphy from './components/Murphy';
 
