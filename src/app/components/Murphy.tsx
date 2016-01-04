@@ -4,23 +4,25 @@ import * as _ from 'lodash';
 import * as React from 'react';
 import SwipeableViews from './SwipeableViewsMaxHeight';
 import * as MUI from 'material-ui';
+const MoreVertIcon = require('material-ui/lib/svg-icons/navigation/more-vert');
 import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
 import Theme = require('./MurphyTheme');
-import {Source, Archive, ArchiveVersion} from '../models';
+import {Config, Source, Archive, ArchiveVersion} from '../models';
 import CardScroller from './CardScroller';
 import BackupConfig from './BackupConfig';
 import RestoreConfig from './RestoreConfig';
 import ProgressCard from './ProgressCard';
 import MessageActionCard from './MessageActionCard';
+import Settings from './Settings';
 
 interface Props {
-  sources: Source[];
-  archives: Archive[];
+  config: Config;
 }
 
 interface State {
   muiTheme?: MUI.Styles.MuiTheme;
   tabIndex?: number;
+  isSettingsOpen?: boolean;
 
   backup?: JobStatus;
   backupSource?: Source;
@@ -48,13 +50,14 @@ export default class Murphy extends React.Component<Props, State> {
     this.state = {
       muiTheme: ThemeManager.getMuiTheme(require('./MurphyTheme')),
       tabIndex: 0,
+      isSettingsOpen: false,
 
       backup: new JobStatus(),
-      backupSource: props.sources[props.sources.length - 1],
-      backupArchive: props.archives[props.archives.length - 1],
+      backupSource: props.config.sources[props.config.sources.length - 1],
+      backupArchive: props.config.archives[props.config.archives.length - 1],
 
       restore: new JobStatus(),
-      restoreArchive: props.archives[props.archives.length - 1],
+      restoreArchive: props.config.archives[props.config.archives.length - 1],
       restoreVersion: null,
       restoreDestination: null
     };
@@ -81,6 +84,13 @@ export default class Murphy extends React.Component<Props, State> {
         height: '100%'
       },
       tabs: {
+        marginRight: 48
+      },
+      menuButton: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        background: Theme.palette.primary1Color
       },
       tabView: {
         flexGrow: 1
@@ -223,6 +233,14 @@ export default class Murphy extends React.Component<Props, State> {
     shell.openItem(this.state.restoreDestination);
   }
 
+  private onOpenSettings() {
+    this.setState({ isSettingsOpen: true });
+  }
+
+  private onCloseSettings() {
+    this.setState({ isSettingsOpen: false });
+  }
+
   private get isRunReady(): boolean {
     if (this.state.tabIndex === 0) {
       return !this.state.backup.isRunning && !!this.state.backupSource && !!this.state.backupArchive;
@@ -234,7 +252,7 @@ export default class Murphy extends React.Component<Props, State> {
 
   render() {
     const backupCards = [
-      <BackupConfig key="config" sources={this.props.sources} archives={this.props.archives}
+      <BackupConfig key="config" sources={this.props.config.sources} archives={this.props.config.archives}
         source={this.state.backupSource} archive={this.state.backupArchive}
         onSourceChange={this.onBackupSourceChange.bind(this)} onArchiveChange={this.onBackupArchiveChange.bind(this)} />
     ];
@@ -250,7 +268,7 @@ export default class Murphy extends React.Component<Props, State> {
     }
 
     const restoreCards = [
-      <RestoreConfig key="config" archives={this.props.archives}
+      <RestoreConfig key="config" archives={this.props.config.archives}
         archive={this.state.restoreArchive} version={this.state.restoreVersion} destination={this.state.restoreDestination}
         onArchiveChange={this.onRestoreArchiveChange.bind(this)} onVersionChange={this.onRestoreVersionChange.bind(this)} onDestinationChange={this.onRestoreDestinationChange.bind(this)} />
     ];
@@ -268,15 +286,23 @@ export default class Murphy extends React.Component<Props, State> {
           <MUI.Tab label="BACKUP" value="0" />
           <MUI.Tab label="RESTORE" value="1" />
         </MUI.Tabs>
+        <MUI.IconMenu iconButtonElement={<MUI.IconButton><MoreVertIcon color={Theme.palette.alternateTextColor} /></MUI.IconButton>}
+            anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
+            targetOrigin={{horizontal: 'right', vertical: 'top'}}
+            desktop={true} style={this.styles.menuButton}>
+          <MUI.MenuItem primaryText="Settings" index={0} onTouchTap={this.onOpenSettings.bind(this)} />
+        </MUI.IconMenu>
         <SwipeableViews index={this.state.tabIndex} onChangeIndex={this.onTabChange.bind(this)} style={this.styles.tabView}>
           <CardScroller cards={backupCards} />
           <CardScroller cards={restoreCards} />
         </SwipeableViews>
-        <MUI.FloatingActionButton style={this.styles.runButton} onClick={this.onStart.bind(this)} disabled={!this.isRunReady}>
+        <MUI.FloatingActionButton style={this.styles.runButton} onTouchTap={this.onStart.bind(this)} disabled={!this.isRunReady}>
           <MUI.SvgIcon color={this.isRunReady ? undefined : 'rgba(0, 0, 0, 0.3)'}>
             <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
           </MUI.SvgIcon>
         </MUI.FloatingActionButton>
+        <Settings open={this.state.isSettingsOpen} onClose={this.onCloseSettings.bind(this)}
+          fileRegExps={this.props.config.fileRegExps} isRegExpEnabled={!!this.props.config.ui.isRegExpEnabled} />
       </div>
     );
   }

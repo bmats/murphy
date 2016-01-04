@@ -14,6 +14,13 @@ interface Sendable {
 interface SerializedConfig {
   sources: AppSource[];
   archives: AppArchive[];
+  fileRegExps: string[];
+  ui: {};
+}
+
+interface ConfigUpdate {
+  fileRegExps: string[];
+  ui: {};
 }
 
 export default class BackupConnector {
@@ -30,6 +37,7 @@ export default class BackupConnector {
     ipcIn.on('add-archive', this.onAddArchive.bind(this));
     ipcIn.on('get-archive-versions', this.onRequestArchiveVersions.bind(this));
     ipcIn.on('open-archive', this.onOpenArchive.bind(this));
+    ipcIn.on('update-config', this.onUpdateConfig.bind(this));
     this._window = browserWindow;
     this._ipcOut = browserWindow.webContents;
 
@@ -183,6 +191,12 @@ export default class BackupConnector {
     }
   }
 
+  onUpdateConfig(event, update: ConfigUpdate): void {
+    this._config.fileRegExps = update.fileRegExps.map(pattern => new RegExp(pattern));
+    this._config.ui = update.ui;
+    this.onLoadConfig(); // reload
+  }
+
   private _serializeConfig(): SerializedConfig {
     return {
       sources: this._config.sources.map(s => {
@@ -194,7 +208,9 @@ export default class BackupConnector {
         return {
           name: a.name
         };
-      })
+      }),
+      fileRegExps: this._config.fileRegExps.map(r => r.source),
+      ui: this._config.ui
     };
   }
 }

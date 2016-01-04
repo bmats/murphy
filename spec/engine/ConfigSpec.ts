@@ -46,7 +46,12 @@ describe('Config', () => {
             type: 'FilesystemArchive',
             path: 'folder/with/Archive'
           }
-        ]
+        ],
+        fileRegExps: ['[Cc]ache', '\\.DS_Store', '\\$RECYCLE.BIN'],
+        ui: {
+          isRegExpEnabled: true,
+          someOtherData: 42
+        }
       };
       MockFs({
         [Config.fileName]: JSON.stringify(data)
@@ -68,6 +73,9 @@ describe('Config', () => {
             expect(archive.name).toBe(data.archives[i].name);
             expect(archive.path).toEqual(data.archives[i].path);
           });
+
+          config.fileRegExps.forEach((regexp, i) => expect(regexp.source).toEqual(data.fileRegExps[i]));
+          expect(config.ui).toEqual(data.ui);
         })
         .catch(err => fail(err))
         .then(done);
@@ -111,6 +119,29 @@ describe('Config', () => {
     });
   });
 
+  describe('.fileRegExps', () => {
+    it('gets and sets the regexps', () => {
+      const config = new Config();
+
+      const regexps = [/[Cc]ache/, /\.DS_Store/, /\$RECYCLE.BIN/];
+      config.fileRegExps = regexps;
+      expect(config.fileRegExps).toBe(regexps);
+    });
+  });
+
+  describe('.ui', () => {
+    it('gets and sets ui data', () => {
+      const config = new Config();
+
+      const data = {
+        isRegExpEnabled: true,
+        someOtherData: 42
+      };
+      config.ui = data;
+      expect(config.ui).toBe(data);
+    });
+  });
+
   describe('.write()', () => {
     it('correctly writes a file', (done) => {
       const expectedData = {
@@ -135,12 +166,19 @@ describe('Config', () => {
             type: 'FilesystemArchive',
             path: 'folder/with/Archive'
           }
-        ]
+        ],
+        fileRegExps: ['[Cc]ache', '\\.DS_Store', '\\$RECYCLE\\.BIN'],
+        ui: {
+          isRegExpEnabled: true,
+          someOtherData: 42
+        }
       };
 
       const config = new Config();
       expectedData.sources.forEach(s => config.addSource(new Source(s.name, s.paths)));
       expectedData.archives.forEach(a => config.addArchive(new FilesystemArchive(a.name, a.path)));
+      config.fileRegExps = expectedData.fileRegExps.map(pattern => new RegExp(pattern));
+      config.ui = expectedData.ui;
 
       fs.readFile(Config.fileName, { encoding: 'utf8' }, (err, data) => {
         expect(err).toBeFalsy();
