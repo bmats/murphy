@@ -1,6 +1,6 @@
-import * as Colors from 'material-ui/lib/styles/colors';
-import * as ColorManipulator from 'material-ui/lib/utils/color-manipulator';
-import * as Spacing from 'material-ui/lib/styles/spacing';
+import Colors from 'material-ui/lib/styles/colors';
+import ColorManipulator from 'material-ui/lib/utils/color-manipulator';
+import Spacing from 'material-ui/lib/styles/spacing';
 
 /*
  *  Light Theme is the default theme used in material-ui. It is guaranteed to
@@ -8,7 +8,7 @@ import * as Spacing from 'material-ui/lib/styles/spacing';
  *  in a custom theme will default to these values.
  */
 
-export = {
+export default {
   spacing: Spacing,
   fontFamily: 'Roboto, sans-serif',
   palette: {

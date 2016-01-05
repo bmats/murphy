@@ -1,9 +1,9 @@
 import * as _ from 'lodash';
 import * as React from 'react';
 const ReactDOM = require('react-dom');
-import * as MUI from 'material-ui';
-import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
-import Theme = require('./MurphyTheme');
+import MUI from 'material-ui';
+import ThemeManager from 'material-ui/lib/styles/theme-manager';
+import Theme from './MurphyTheme';
 
 interface Props {
   cards: React.ReactElement<any>[];

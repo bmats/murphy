@@ -2,8 +2,8 @@ import {remote, ipcRenderer} from 'electron';
 const dialog = remote.require('dialog');
 import * as path from 'path';
 import * as React from 'react';
-import * as MUI from 'material-ui';
-import Theme = require('./MurphyTheme');
+import MUI from 'material-ui';
+import Theme from './MurphyTheme';
 import {Archive, ArchiveVersion} from '../models';
 import AddSelectField from './AddSelectField';
 import VerticalSeparator from './VerticalSeparator';
@@ -144,12 +144,8 @@ export default class RestoreConfig extends React.Component<Props, State> {
 
     let versionIndex = this.state.archiveVersions.indexOf(this.props.version);
     if (versionIndex < 0) versionIndex = 0;
-    const versionItems: __MaterialUI.Menu.MenuItemRequest[] = this.state.archiveVersions.map((v, i) => {
-      return {
-        text: RestoreConfig.formatDate(v.date),
-        payload: i
-      };
-    });
+    const versionItems = this.state.archiveVersions.map((v, i) =>
+      <MUI.MenuItem key={i} primaryText={RestoreConfig.formatDate(v.date)} value={i} />);
 
     let destinationText;
     if (this.props.destination) {
@@ -165,7 +161,9 @@ export default class RestoreConfig extends React.Component<Props, State> {
           </h2>
           <AddSelectField label="Backup" items={this.props.archives.map(a => a.name)} value={archiveIndex}
             onAdd={this.onArchiveAdd.bind(this)} onChange={this.onArchiveNameChange.bind(this)} />
-          <MUI.SelectField value={versionIndex} menuItems={versionItems} onChange={this.onVersionChange.bind(this)} />
+          <MUI.SelectField value={versionIndex} onChange={this.onVersionChange.bind(this)}>
+            {versionItems}
+          </MUI.SelectField>
         </div>
         <VerticalSeparator verticalMargin={Theme.spacing.desktopGutter} />
         <div style={this.styles.rightSide}>

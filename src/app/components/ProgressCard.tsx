@@ -1,6 +1,6 @@
 import * as React from 'react';
-import * as MUI from 'material-ui';
-import Theme = require('./MurphyTheme');
+import MUI from 'material-ui';
+import Theme from './MurphyTheme';
 
 interface Props {
   progress: number;

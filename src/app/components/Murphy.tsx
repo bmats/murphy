@@ -3,10 +3,10 @@ const dialog = remote.require('dialog');
 import * as _ from 'lodash';
 import * as React from 'react';
 import SwipeableViews from './SwipeableViewsMaxHeight';
-import * as MUI from 'material-ui';
-const MoreVertIcon = require('material-ui/lib/svg-icons/navigation/more-vert');
-import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
-import Theme = require('./MurphyTheme');
+import MUI from 'material-ui';
+import MoreVertIcon from 'material-ui/lib/svg-icons/navigation/more-vert';
+import ThemeManager from 'material-ui/lib/styles/theme-manager';
+import Theme from './MurphyTheme';
 import {Config, Source, Archive, ArchiveVersion} from '../models';
 import CardScroller from './CardScroller';
 import BackupConfig from './BackupConfig';
@@ -48,7 +48,7 @@ export default class Murphy extends React.Component<Props, State> {
     super(props);
 
     this.state = {
-      muiTheme: ThemeManager.getMuiTheme(require('./MurphyTheme')),
+      muiTheme: ThemeManager.getMuiTheme(Theme),
       tabIndex: 0,
       isSettingsOpen: false,
 

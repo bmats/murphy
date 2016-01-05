@@ -1,7 +1,6 @@
 import * as React from 'react';
-import * as MUI from 'material-ui';
-import * as ThemeManager from 'material-ui/lib/styles/theme-manager';
-import Menu = require('material-ui/lib/menu/menu');
+import MUI from 'material-ui';
+import ThemeManager from 'material-ui/lib/styles/theme-manager';
 
 interface Props {
   label: string;
@@ -46,18 +45,13 @@ export default class AddSelectField extends React.Component<Props, State> {
   }
 
   render() {
-    const items: __MaterialUI.Menu.MenuItemRequest[] = this.props.items.map((item, i) => {
-      return {
-        text: item,
-        payload: i
-      };
-    });
-    items.push({
-      text: 'Add New ' + this.props.label,
-      payload: items.length
-    });
+    const items = this.props.items.map((item, i) => <MUI.MenuItem key={i} primaryText={item} value={i} />);
+    items.push(<MUI.MenuItem key={items.length} primaryText={'Add New ' + this.props.label} value={items.length} />);
+
     return (items.length > 1)
-      ? <MUI.SelectField value={this.state.selectedIndex} menuItems={items} onChange={this.onValueChange.bind(this)} />
+      ? <MUI.SelectField value={this.state.selectedIndex} onChange={this.onValueChange.bind(this)}>
+          {items}
+        </MUI.SelectField>
       : <MUI.FlatButton label={'Add ' + this.props.label} onClick={this.props.onAdd} />;
   }
 }
