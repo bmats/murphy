@@ -5,8 +5,9 @@ import * as Promise from 'bluebird';
 import * as winston from 'winston';
 import Archive from './Archive';
 import ArchiveVersion from './ArchiveVersion';
-import Progress from './Progress';
+import Config from './Config';
 import Source from './Source';
+import Progress from './Progress';
 import {checkPathDoesNotExist, mkdirpAsync, writeFileAsync} from './util';
 
 const DIRSEP = path.sep;
@@ -28,6 +29,13 @@ class StopPromiseError extends Error {
 
 function stopPromise(): StopPromiseError {
   throw new StopPromiseError();
+}
+
+function matchAnyRegExps(str: string, regexps: RegExp[]) {
+  for (let i = 0; i < regexps.length; ++i) {
+    if (str.match(regexps[i])) return true;
+  }
+  return false;
 }
 
 abstract class Job {
@@ -64,12 +72,14 @@ class BackupJob extends Job {
 
   private _source: Source;
   private _destination: Archive;
+  private _config: Config;
   private _progress: Progress;
 
-  constructor(source: Source, destination: Archive, callback?: ProgressCallback) {
+  constructor(source: Source, destination: Archive, config: Config, callback?: ProgressCallback) {
     super(callback);
     this._source = source;
     this._destination = destination;
+    this._config = config;
     this._progress = new Progress({
       getVersions:       0.08,
       createVersion:     0.02,
@@ -103,7 +113,9 @@ class BackupJob extends Job {
       // Get the source files
       .then(() => { this.updateStatus(this._progress.advance().value, 'Reading source folder(s)') })
       .then(this.source.getFiles.bind(this.source))
-      .then((files: string[]) => { this.sourceFiles = files })
+      .then((files: string[]) => {
+        this.sourceFiles = files.filter(file => !matchAnyRegExps(file, this._config.fileRegExps));
+      })
 
       .then(this.writeSourceFiles.bind(this))
       .then(this.writeDeletedFiles.bind(this))
@@ -333,8 +345,10 @@ class RestoreJob extends Job {
 // TODO: implement job stopping?
 export default class Engine {
   private _jobCount: number = 0;
+  private _config: Config;
 
-  constructor() {
+  constructor(config: Config) {
+    this._config = config;
   }
 
   runBackup(source: Source, destination: Archive, progressCallback?: ProgressCallback): Promise<ArchiveVersion> {
@@ -342,7 +356,7 @@ export default class Engine {
       throw new Error('Cannot run more than one job at a time.');
     ++this._jobCount;
 
-    const job = new BackupJob(source, destination, progressCallback);
+    const job = new BackupJob(source, destination, this._config, progressCallback);
     return job.start()
       .then(version => {
         --this._jobCount;

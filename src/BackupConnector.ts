@@ -40,8 +40,6 @@ export default class BackupConnector {
     ipcIn.on('update-config', this.onUpdateConfig.bind(this));
     this._window = browserWindow;
     this._ipcOut = browserWindow.webContents;
-
-    this._engine = new Engine();
   }
 
   onLoadConfig(): void {
@@ -51,6 +49,7 @@ export default class BackupConnector {
       Config.load()
         .then(config => {
           this._config = config;
+          this._engine = new Engine(config);
           this._ipcOut.send('config-loaded', this._serializeConfig());
         });
     }

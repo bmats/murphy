@@ -3,6 +3,7 @@ import * as MockFs from 'mock-fs';
 import * as MockDate from 'mockdate';
 import Engine from '../../src/engine/Engine';
 import Source from '../../src/engine/Source';
+import Config from '../../src/engine/Config';
 import ArchiveVersion from '../../src/engine/ArchiveVersion';
 import FilesystemArchive from '../../src/engine/fs/FilesystemArchive';
 import FilesystemArchiveVersion from '../../src/engine/fs/FilesystemArchiveVersion';
@@ -35,7 +36,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new Source('Test Source', ['Source']);
       const archive = new FilesystemArchive('Test Archive', 'Archive');
       let newVersion: ArchiveVersion;
@@ -84,7 +85,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new Source('Test Source', ['Source']);
       const archive = new FilesystemArchive('Test Archive', 'Archive');
       let newVersion: ArchiveVersion;
@@ -124,7 +125,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new Source('Test Source', ['Source']);
       const archive = new FilesystemArchive('Test Archive', 'Archive');
       let newVersion: ArchiveVersion;
@@ -172,7 +173,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new Source('Test Source', ['Source']);
       const archive = new FilesystemArchive('Test Archive', 'Archive');
       let newVersion: ArchiveVersion;
@@ -186,6 +187,56 @@ describe('Engine', () => {
         .then(status => expect(status).toBe('modify'))
         .then(() => newVersion.getFileStatus('file5.txt'))
         .then(status => expect(status).toBeUndefined())
+
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('filters source files using Config.fileRegExps', (done) => {
+      MockFs({
+        Source: {
+          folder: {
+            'file1.ts': '',
+            'file2.tsx': '',
+            'file3.ts': ''
+          },
+          excludedFolder: {
+            'picture.jpg': ''
+          },
+          'file3.txt': '',
+          'file4.md': ''
+        },
+        Archive: {
+          Latest: {},
+          Versions: {}
+        }
+      });
+
+      const config = new Config();
+      config.fileRegExps = [/x/];
+      const engine = new Engine(config);
+
+      const source = new Source('Test Source', ['Source']);
+      const archive = new FilesystemArchive('Test Archive', 'Archive');
+      let newVersion: ArchiveVersion;
+      engine.runBackup(source, archive)
+        .then(() => {
+          expect(fs.readdirSync('Archive/Versions/2018-01-11 05-00-00')).toEqualInAnyOrder(['.index', 'folder', 'file4.md']);
+          expect(fs.readdirSync('Archive/Versions/2018-01-11 05-00-00/folder')).toEqualInAnyOrder(['file1.ts', 'file3.ts']);
+          expect(fs.statSync('Archive/Versions/2018-01-11 05-00-00/folder/file1.ts').isFile()).toBe(true);
+          expect(fs.statSync('Archive/Versions/2018-01-11 05-00-00/folder/file3.ts').isFile()).toBe(true);
+          expect(fs.statSync('Archive/Versions/2018-01-11 05-00-00/file4.md').isFile()).toBe(true);
+        })
+
+        .then(archive.getVersions.bind(archive))
+        .then(versions => newVersion = versions[0])
+
+        .then(() => newVersion.getFileStatus('folder/file1.ts'))
+        .then(status => expect(status).toBe('add'))
+        .then(() => newVersion.getFileStatus('folder/file3.ts'))
+        .then(status => expect(status).toBe('add'))
+        .then(() => newVersion.getFileStatus('file4.md'))
+        .then(status => expect(status).toBe('add'))
 
         .catch(err => fail(err))
         .then(done);
@@ -206,7 +257,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new Source('Test Source', ['Source']);
       const archive = new FilesystemArchive('Test Archive', 'Archive');
       let duplicateVersion: FilesystemArchiveVersion;
@@ -244,7 +295,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new Source('Test Source', ['Source']);
       const archive = new FilesystemArchive('Test Archive', 'Archive');
       engine.runBackup(source, archive)
@@ -283,7 +334,7 @@ describe('Engine', () => {
         callbackCalled = true;
       }
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new Source('Test Source', ['Source']);
       const archive = new FilesystemArchive('Test Archive', 'Archive');
       engine.runBackup(source, archive, callback)
@@ -303,7 +354,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new Source('Test Source', ['Source']);
       const archive = new FilesystemArchive('Test Archive', 'Archive');
       let newVersion: ArchiveVersion;
@@ -335,7 +386,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new FilesystemArchive('Test Archive', 'Archive');
       source.getVersions()
         .then(versions => engine.runRestore(source, versions[0], 'out'))
@@ -368,7 +419,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new FilesystemArchive('Test Archive', 'Archive');
       source.getVersions()
         .then(versions => engine.runRestore(source, versions[0], 'out'))
@@ -405,7 +456,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new FilesystemArchive('Test Archive', 'Archive');
       source.getVersions()
         .then(versions => engine.runRestore(source, versions[0], 'out'))
@@ -435,7 +486,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new FilesystemArchive('Test Archive', 'Archive');
       source.getVersions()
         .then(versions => engine.runRestore(source, versions[0], 'out'))
@@ -466,7 +517,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new FilesystemArchive('Test Archive', 'Archive');
       source.getVersions()
         .then(versions => engine.runRestore(source, versions[0], 'out'))
@@ -493,7 +544,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new FilesystemArchive('Test Archive', 'Archive');
       source.getVersions()
         .then(versions => engine.runRestore(source, versions[0], 'out'))
@@ -524,7 +575,7 @@ describe('Engine', () => {
         }
       });
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new FilesystemArchive('Test Archive', 'Archive');
       source.getVersions()
         .then(versions => engine.runRestore(source, versions[1], 'out')) // second to last - 2016
@@ -558,7 +609,7 @@ describe('Engine', () => {
         callbackCalled = true;
       }
 
-      const engine = new Engine();
+      const engine = new Engine(new Config());
       const source = new FilesystemArchive('Test Archive', 'Archive');
       source.getVersions()
         .then(versions => engine.runRestore(source, versions[0], 'out', callback))
