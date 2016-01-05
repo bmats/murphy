@@ -96,7 +96,6 @@ export default class Settings extends React.Component<Props, State> {
       error = validateRegExps(newFileRegExps);
     }
 
-    console.log(newFileRegExps);
     this.setState({
       fileRegExps: newFileRegExps,
       regExpError: error,

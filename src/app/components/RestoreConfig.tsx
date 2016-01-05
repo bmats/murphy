@@ -174,7 +174,7 @@ export default class RestoreConfig extends React.Component<Props, State> {
             <small style={this.styles.headingCaption}>Where should I restore the files?</small>
           </h2>
           {destinationText}
-          <MUI.RaisedButton label="Select Folder" onClick={this.onBrowse.bind(this)} />
+          <MUI.FlatButton label="Select Folder" onClick={this.onBrowse.bind(this)} />
         </div>
       </div>
     );
