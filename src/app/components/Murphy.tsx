@@ -286,10 +286,8 @@ export default class Murphy extends React.Component<Props, State> {
           <MUI.Tab label="BACKUP" value="0" />
           <MUI.Tab label="RESTORE" value="1" />
         </MUI.Tabs>
-        <MUI.IconMenu iconButtonElement={<MUI.IconButton><MoreVertIcon color={Theme.palette.alternateTextColor} /></MUI.IconButton>}
-            anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
-            targetOrigin={{horizontal: 'right', vertical: 'top'}}
-            desktop={true} style={this.styles.menuButton}>
+        <MUI.IconMenu desktop style={this.styles.menuButton}
+            iconButtonElement={<MUI.IconButton><MoreVertIcon color={Theme.palette.alternateTextColor} /></MUI.IconButton>}>
           <MUI.MenuItem primaryText="Settings" index={0} onTouchTap={this.onOpenSettings.bind(this)} />
         </MUI.IconMenu>
         <SwipeableViews index={this.state.tabIndex} onChangeIndex={this.onTabChange.bind(this)} style={this.styles.tabView}>

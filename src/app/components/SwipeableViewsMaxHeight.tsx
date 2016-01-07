@@ -12,11 +12,9 @@ import {Motion, spring} from 'react-motion';
 const styles = {
   root: {
     overflowX: 'hidden',
-    display: 'flex',
   },
   container: {
-    display: '-webkit-box; display: flex',
-    flexGrow: 1,
+    display: 'flex',
   },
   slide: {
     width: '100%',

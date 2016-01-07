@@ -29,34 +29,29 @@ export default class BackupConfig extends React.Component<Props, {}> {
   private get styles() {
     const padding: number = Theme.spacing.desktopGutter;
     return {
-      leftSide: {
-        display: 'inline-block',
-        width: '50%',
-        verticalAlign: 'top',
-        paddingRight: padding,
-        boxSizing: 'border-box',
-        textAlign: 'center'
+      container: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'stretch',
       },
-      rightSide: {
-        display: 'inline-block',
-        width: '50%',
-        verticalAlign: 'top',
-        paddingLeft: padding,
+      panel: {
+        flexBasis: '50%',
         boxSizing: 'border-box',
-        textAlign: 'center'
+        textAlign: 'center',
       },
       heading: {
         fontSize: 24,
         fontWeight: 400,
         marginTop: 0,
-        marginBottom: padding
+        marginBottom: padding,
       },
       headingCaption: {
         display: 'block',
         fontWeight: 400,
         marginTop: 8,
-        fontSize: 13
-      }
+        fontSize: 13,
+      },
     };
   }
 
@@ -107,8 +102,8 @@ export default class BackupConfig extends React.Component<Props, {}> {
     if (archiveIndex < 0) archiveIndex = 0;
 
     return (
-      <div>
-        <div style={this.styles.leftSide}>
+      <div style={this.styles.container}>
+        <div style={this.styles.panel}>
           <h2 style={this.styles.heading}>
             What
             <small style={this.styles.headingCaption}>What folders should I back up?</small>
@@ -116,8 +111,8 @@ export default class BackupConfig extends React.Component<Props, {}> {
           <AddSelectField label="Folders" items={this.props.sources.map(s => s.name)} value={sourceIndex}
             onAdd={this.onSourceAdd.bind(this)} onChange={this.onSourceChange.bind(this)} />
         </div>
-        <VerticalSeparator verticalMargin={Theme.spacing.desktopGutter} />
-        <div style={this.styles.rightSide}>
+        <VerticalSeparator verticalMargin={Theme.spacing.desktopGutter} direction="right" />
+        <div style={this.styles.panel}>
           <h2 style={this.styles.heading}>
             Where
             <small style={this.styles.headingCaption}>Where should I back them up?</small>

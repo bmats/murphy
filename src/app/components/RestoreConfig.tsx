@@ -55,37 +55,32 @@ export default class RestoreConfig extends React.Component<Props, State> {
   private get styles() {
     const padding: number = Theme.spacing.desktopGutter;
     return {
-      leftSide: {
-        display: 'inline-block',
-        width: '50%',
-        verticalAlign: 'top',
-        paddingRight: padding,
-        boxSizing: 'border-box',
-        textAlign: 'center'
+      container: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'stretch',
       },
-      rightSide: {
-        display: 'inline-block',
-        width: '50%',
-        verticalAlign: 'top',
-        paddingLeft: padding,
+      panel: {
+        flexBasis: '50%',
         boxSizing: 'border-box',
-        textAlign: 'center'
+        textAlign: 'center',
       },
       heading: {
         fontSize: 24,
         fontWeight: 400,
         marginTop: 0,
-        marginBottom: padding
+        marginBottom: padding,
       },
       headingCaption: {
         display: 'block',
         fontWeight: 400,
         marginTop: 8,
-        fontSize: 13
+        fontSize: 13,
       },
       destination: {
-        marginBottom: padding / 2
-      }
+        marginBottom: padding / 2,
+      },
     };
   }
 
@@ -153,20 +148,21 @@ export default class RestoreConfig extends React.Component<Props, State> {
     }
 
     return (
-      <div>
-        <div style={this.styles.leftSide}>
+      <div style={this.styles.container}>
+        <div style={this.styles.panel}>
           <h2 style={this.styles.heading}>
             What
             <small style={this.styles.headingCaption}>What backup should I restore from?</small>
           </h2>
           <AddSelectField label="Backup" items={this.props.archives.map(a => a.name)} value={archiveIndex}
             onAdd={this.onArchiveAdd.bind(this)} onChange={this.onArchiveNameChange.bind(this)} />
-          <MUI.SelectField value={versionIndex} onChange={this.onVersionChange.bind(this)}>
+          <br />
+          <MUI.SelectField value={versionIndex} onChange={this.onVersionChange.bind(this)} labelStyle={{ paddingRight: 0 }}>
             {versionItems}
           </MUI.SelectField>
         </div>
-        <VerticalSeparator verticalMargin={Theme.spacing.desktopGutter} />
-        <div style={this.styles.rightSide}>
+        <VerticalSeparator verticalMargin={Theme.spacing.desktopGutter} direction="right" />
+        <div style={this.styles.panel}>
           <h2 style={this.styles.heading}>
             Where
             <small style={this.styles.headingCaption}>Where should I restore the files?</small>
