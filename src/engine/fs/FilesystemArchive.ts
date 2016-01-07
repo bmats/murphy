@@ -67,7 +67,7 @@ export default class FilesystemArchive extends Archive {
     }).then(() => new Promise<void>((resolve, reject) => {
       // Make archive structure
       writeFileAsync(this.path + DIRSEP + README_FILENAME, this.getReadMeText(), { flag: 'wx' }) // don't overwrite
-        .catch(err => { winston.error('Error writing readme (already exists?)', { error: err }) })
+        .catch(err => { winston.info('Error writing readme (already exists?)', { error: err }) })
         .then(() => mkdirpAsync(this.path + DIRSEP + LATEST_FOLDER))
         .then(() => mkdirpAsync(this.path + DIRSEP + VERSIONS_FOLDER))
         .then(resolve)
