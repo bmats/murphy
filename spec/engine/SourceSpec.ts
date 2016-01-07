@@ -162,7 +162,16 @@ describe('Source', () => {
       expect(Source._findCommonRootDir([file])).toBe(file);
     });
 
-    it('works for normal paths', () => {
+    it('works for paths with a root directory', () => {
+      const paths = [
+        '/path/to/a/file.txt',
+        '/path/to/another/cool/file.txt',
+        '/path/to/a/folder',
+      ];
+      expect(Source._findCommonRootDir(paths)).toBe('/path/to');
+    });
+
+    it('works for paths from the current directory', () => {
       const paths = [
         'path/to/a/file.txt',
         'path/to/another/cool/file.txt',

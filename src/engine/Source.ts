@@ -138,7 +138,8 @@ export default class Source {
     if (paths.length === 1) return paths[0];
 
     // Split each path up into folders
-    const pathFolders: string[][] = paths.map(path => path.split(DIRSEP).filter(e => e.length > 0)); // remove empty
+    const pathFolders: string[][] = paths.map(path =>
+      path.split(DIRSEP).filter((e, i) => i === 0 || e.length > 0)); // remove empty folder names, excluding root
     for (let folderIndex = 0; folderIndex < pathFolders[0].length; ++folderIndex) {
       let folder = pathFolders[0][folderIndex];
 
