@@ -315,6 +315,57 @@ describe('FilesystemArchiveVersion', () => {
         })
         .catch(err => fail(err));
     });
+
+    it('throttles file opens', (done) => {
+      const FILE_COUNT = 15555;
+      const MAX_FILES_OPEN = 100; // set on filequeue
+      const FILE_OPEN_WAIT = 1; // ms
+
+      const files = new Array(FILE_COUNT);
+      for (let i = 0; i < FILE_COUNT; ++i) {
+        files[i] = `file${i}.txt`;
+      }
+
+      const filesystem: any = {
+        'Archive/Versions/2018-01-11 05-00-00': {
+          '.index': 'source: My Computer\nfiles:\n' + files.reduce((str, file) => str += `  ${file}: add\n`, '')
+        }
+      };
+      files.forEach(file => filesystem['Archive/Versions/2018-01-11 05-00-00'][file] = '');
+      MockFs(filesystem);
+
+      const version = new FilesystemArchiveVersion(new Date(), 'Archive');
+      const streams = new Array(FILE_COUNT);
+
+      const openFiles = [];
+      let filesOpenedCount = 0;
+      function addToOpenFiles() {
+        openFiles.push(this);
+      }
+
+      function checkForOpenedFiles() {
+        expect(openFiles.length).toBe(Math.min(FILE_COUNT - filesOpenedCount, MAX_FILES_OPEN));
+        filesOpenedCount += openFiles.length;
+
+        openFiles.forEach(stream => stream.destroy());
+        openFiles.length = 0;
+
+        if (filesOpenedCount < FILE_COUNT) {
+          setTimeout(checkForOpenedFiles, FILE_OPEN_WAIT);
+        } else {
+          done();
+        }
+      }
+
+      version.load()
+        .then(() => {
+          for (let i = 0; i < FILE_COUNT; ++i) {
+            streams[i] = version.createReadStream(`file${i}.txt`);
+            streams[i].on('open', addToOpenFiles.bind(streams[i]));
+          }
+          setTimeout(checkForOpenedFiles, FILE_OPEN_WAIT);
+        });
+    });
   });
 
   describe('.getFileChecksum()', () => {

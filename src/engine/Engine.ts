@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import * as fs from 'fs';
+const FileQueue = require('filequeue');
 import * as path from 'path';
 import * as Promise from 'bluebird';
 import * as winston from 'winston';
@@ -8,9 +9,11 @@ import ArchiveVersion from './ArchiveVersion';
 import Config from './Config';
 import Source from './Source';
 import Progress from './Progress';
-import {checkPathDoesNotExist, mkdirpAsync, writeFileAsync} from './util';
+import {checkPathDoesNotExist, mkdirpAsync, resolveOnOpen, writeFileAsync} from './util';
 
+const fq = new FileQueue(100, true);
 const DIRSEP = path.sep;
+
 const SUMMARY_FILE = 'Restore Summary.txt'
 
 interface ProgressCallback {
@@ -147,14 +150,20 @@ class BackupJob extends Job {
                 .then(checksums => {
                   if (checksums[0] !== checksums[1]) {
                     // If file has changed
-                    return this.newVersion.writeFile(file, 'modify', this.source.createReadStream(file))
+                    const readStream = this.source.createReadStream(file);
+                    return resolveOnOpen(readStream)
+                      .then(() => this.newVersion.writeFile(file, 'modify', readStream))
+                      .then(() => { readStream.destroy() })
                       .then(() => Promise.all([Promise.resolve(checksums[0]), this.newVersion.getFileChecksum(file)]))
                       .then(checksums => verifyChecksums(file, checksums))
                   }
                 })
                 .then(stopPromise); // file was found
             case 'delete':
-              return this.newVersion.writeFile(file, 'add', this.source.createReadStream(file))
+              const readStream = this.source.createReadStream(file);
+              return resolveOnOpen(readStream)
+                .then(() => this.newVersion.writeFile(file, 'add', readStream))
+                .then(() => { readStream.destroy() })
                 .then(() => Promise.all([this.source.getFileChecksum(file), this.newVersion.getFileChecksum(file)]))
                 .then(checksums => verifyChecksums(file, checksums))
                 .then(stopPromise); // file was found
@@ -162,7 +171,10 @@ class BackupJob extends Job {
           })
       ).then(() => {
         // Not rejected, meaning version was not found, so file is new
-        return this.newVersion.writeFile(file, 'add', this.source.createReadStream(file))
+        const readStream = this.source.createReadStream(file);
+        return resolveOnOpen(readStream)
+          .then(() => this.newVersion.writeFile(file, 'add', readStream))
+          .then(() => { readStream.destroy() })
           .then(() => Promise.all([this.source.getFileChecksum(file), this.newVersion.getFileChecksum(file)]))
           .then(checksums => verifyChecksums(file, checksums));
       }, (err) => {
@@ -306,23 +318,34 @@ class RestoreJob extends Job {
             ])
             .then(() => new Promise<void>((resolve, reject) => {
               const readStream = version.createReadStream(file);
-              const writeStream = fs.createWriteStream(filePath);
+              let writeStream: fs.WriteStream;
+
+              readStream.on('error', onError);
+              readStream.on('open', () => {
+                writeStream = fq.createWriteStream(filePath);
+                writeStream.on('error', onError);
+
+                writeStream.on('open', () => {
+                  readStream.pipe(writeStream);
+                });
+                writeStream.once('finish', () => {
+                  readStream.destroy();
+                  writeStream.close();
+                  resolve();
+                });
+              });
+
               function onError(err) {
                 winston.error('Error writing file', { path: filePath, error: err });
+                readStream.destroy();
+                if (writeStream)
+                  writeStream.close();
                 reject(err);
               }
-              readStream.on('error', onError);
-              writeStream.on('error', onError);
-
-              // TODO: progress events?
-              writeStream.on('open', () => readStream.pipe(writeStream));
-              writeStream.once('finish', () => {
-                writeStream.end();
-                resolve();
-              });
             }));
           case 'delete':
           default:
+            // Ignore this file
             delete this.fileVersions[file];
             return Promise.resolve();
           }

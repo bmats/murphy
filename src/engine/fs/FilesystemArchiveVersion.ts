@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+const FileQueue = require('filequeue');
 import * as path from 'path';
 import * as stream from 'stream';
 import {sep as DIRSEP} from 'path';
@@ -6,6 +7,8 @@ import * as winston from 'winston';
 import * as yaml from 'js-yaml';
 import ArchiveVersion from '../ArchiveVersion';
 import {checkPathDoesNotExist, hashStream, mkdirAsync, mkdirpAsync, readFileAsync, writeFileAsync} from '../util';
+
+const fq = new FileQueue(100, true);
 
 const FOLDER_NAME_REGEX = /(\d{4})-(\d{2})-(\d{2}) (\d{2})-(\d{2})-(\d{2})/;
 const VERSIONS_FOLDER: string = 'Versions';
@@ -115,21 +118,23 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
           .catch(err => winston.warn('File passed to writeFileStream already exists', { file: filePath }))
       ])
       .then(() => new Promise<void>((resolve, reject) => {
-        const writeStream = fs.createWriteStream(filePath);
+        const writeStream = fq.createWriteStream(filePath);
+        writeStream.on('error', onError);
+        readStream.on('error', onError);
+
+        writeStream.on('open', () => readStream.pipe(writeStream));
+        writeStream.once('finish', () => {
+          writeStream.close();
+          readStream.removeListener('error', onError);
+          resolve();
+        });
 
         function onError(err) {
           winston.error('Error writing archive file', { path: filePath, error: err });
+          writeStream.close();
+          readStream.removeListener('error', onError);
           reject(err);
         }
-        readStream.on('error', onError);
-        writeStream.on('error', onError);
-
-        // TODO: progress events?
-        writeStream.on('open', () => readStream.pipe(writeStream));
-        writeStream.once('finish', () => {
-          writeStream.end();
-          resolve();
-        });
       }));
 
     case 'delete':
@@ -142,7 +147,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
 
   createReadStream(file: string): stream.Readable {
     if (file in this._index) {
-      return fs.createReadStream(this.folderPath + DIRSEP + file);
+      return fq.createReadStream(this.folderPath + DIRSEP + file);
     } else {
       return null;
     }
@@ -156,14 +161,19 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
 
       stream.on('open', () => {
         hashStream(stream)
-          .then(resolve)
+          .then(result => {
+            stream.destroy();
+            resolve(result);
+          })
           .catch(err => {
             winston.error('Archive version file hashing error', { file: file, error: err });
+            stream.destroy();
             reject(err);
           });
       });
       stream.on('error', err => {
         winston.error('Error opening archive version file', { file: file, error: err });
+        stream.destroy();
         reject(err);
       });
     });

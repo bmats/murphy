@@ -21,6 +21,15 @@ describe('Engine', () => {
   });
 
   describe('.runBackup()', () => {
+    let originalJasmineTimeout: number;
+    beforeAll(() => {
+      originalJasmineTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
+    });
+    afterAll(() => {
+      jasmine.DEFAULT_TIMEOUT_INTERVAL = originalJasmineTimeout;
+    });
+
     it('adds all files when there are no previous versions', (done) => {
       MockFs({
         Source: {
@@ -237,6 +246,42 @@ describe('Engine', () => {
         .then(status => expect(status).toBe('add'))
         .then(() => newVersion.getFileStatus('file4.md'))
         .then(status => expect(status).toBe('add'))
+
+        .catch(err => fail(err))
+        .then(done);
+    });
+
+    it('can handle thousands of files', (done) => {
+      const FILE_COUNT = 12345;
+
+      const filesystem: any = {
+        Source: {},
+        Archive: {
+          Latest: {},
+          Versions: {}
+        }
+      };
+      for (let i = 0; i < FILE_COUNT; ++i) {
+        filesystem.Source[`file${i}.txt`] = `file ${i}`;
+      }
+      MockFs(filesystem);
+
+      const expectedFiles = Object.keys(filesystem.Source);
+
+      const engine = new Engine(new Config());
+      const source = new Source('Test Source', ['Source']);
+      const archive = new FilesystemArchive('Test Archive', 'Archive');
+      engine.runBackup(source, archive)
+        .then(() => expect(fs.readdirSync('Archive/Versions/2018-01-11 05-00-00')).toEqualInAnyOrder(expectedFiles.concat('.index')))
+
+        .then(archive.getVersions.bind(archive))
+        .then(versions => {
+          const newVersion = versions[0];
+          return Promise.all(expectedFiles.map(file =>
+            newVersion.getFileStatus(file)
+              .then(status => expect(status).toBe('add'))
+          ))
+        })
 
         .catch(err => fail(err))
         .then(done);

@@ -1,10 +1,13 @@
 import * as async from 'async';
 import * as fs from 'fs';
+const FileQueue = require('filequeue');
 import * as crypto from 'crypto';
 import {sep as DIRSEP} from 'path';
 import * as stream from 'stream';
 import * as winston from 'winston';
 import {hashStream} from './util';
+
+const fq = new FileQueue(100, true);
 
 export default class Source {
   private _name: string;
@@ -99,7 +102,7 @@ export default class Source {
   createReadStream(file: string): stream.Readable {
     let root = this._rootDir;
     if (this._rootDir.length > 0 && this._rootDir.charAt(this._rootDir.length - 1) !== DIRSEP) root += DIRSEP;
-    return fs.createReadStream(root + file);
+    return fq.createReadStream(root + file);
   }
 
   getFileChecksum(file: string): Promise<string> {
@@ -108,14 +111,19 @@ export default class Source {
 
       fileStream.on('open', () => {
         hashStream(fileStream)
-          .then(resolve)
+          .then(result => {
+            fileStream.destroy();
+            resolve(result);
+          })
           .catch(err => {
             winston.error('Source file hashing error', { file: file, error: err });
+            fileStream.destroy();
             reject(err);
           });
       });
       fileStream.on('error', err => {
         winston.error('Error opening source file', { file: file, error: err });
+        fileStream.destroy();
         reject(err);
       });
     });

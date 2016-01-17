@@ -35,6 +35,13 @@ export function hashStream(stream: stream.Readable): Promise<string> {
   });
 }
 
+export function resolveOnOpen(emitter): Promise<any> {
+  return new Promise((resolve, reject) => {
+    emitter.on('open', resolve);
+    emitter.on('error', reject);
+  });
+}
+
 export const mkdirAsync   = Promise.promisify(fs.mkdir);
 export const mkdirpAsync  = Promise.promisify(mkdirp);
 export const readdirAsync = Promise.promisify(fs.readdir);

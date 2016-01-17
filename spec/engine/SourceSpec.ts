@@ -83,17 +83,15 @@ describe('Source', () => {
   describe('.createReadStream()', () => {
     const contents = 'The quick brown fox jumps over the lazy dog';
 
-    beforeEach(() => {
-      MockFs({
-        'folder/file.txt': contents
-      });
-    });
-
     afterEach(() => {
       MockFs.restore();
     });
 
     it('returns a valid stream', (done) => {
+      MockFs({
+        'folder/file.txt': contents
+      });
+
       const source = new Source('Test Source', ['folder']);
       const stream = source.createReadStream('file.txt');
 
@@ -105,6 +103,48 @@ describe('Source', () => {
         done();
       });
       stream.on('error', err => fail(err));
+    });
+
+    it('throttles file opens', (done) => {
+      const FILE_COUNT = 15555;
+      const MAX_FILES_OPEN = 100; // set on filequeue
+      const FILE_OPEN_WAIT = 1; // ms
+
+      const filesystem: any = {};
+      for (let i = 0; i < FILE_COUNT; ++i) {
+        filesystem[`/file${i}.txt`] = `file ${i}`;
+      }
+      MockFs(filesystem);
+
+      const source = new Source('Test Source', ['/']);
+      const streams = new Array(FILE_COUNT);
+
+      const openFiles = [];
+      let filesOpenedCount = 0;
+      function addToOpenFiles() {
+        openFiles.push(this);
+      }
+
+      for (let i = 0; i < FILE_COUNT; ++i) {
+        streams[i] = source.createReadStream(`/file${i}.txt`);
+        streams[i].on('open', addToOpenFiles.bind(streams[i]));
+      }
+
+      function checkForOpenedFiles() {
+        expect(openFiles.length).toBe(Math.min(FILE_COUNT - filesOpenedCount, MAX_FILES_OPEN));
+        filesOpenedCount += openFiles.length;
+
+        openFiles.forEach(stream => stream.destroy());
+        openFiles.length = 0;
+
+        if (filesOpenedCount < FILE_COUNT) {
+          setTimeout(checkForOpenedFiles, FILE_OPEN_WAIT);
+        } else {
+          done();
+        }
+      }
+
+      setTimeout(checkForOpenedFiles, FILE_OPEN_WAIT);
     });
   });
 
