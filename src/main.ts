@@ -1,8 +1,17 @@
 import {app, BrowserWindow, ipcMain, Menu} from 'electron';
+import * as os from 'os';
+import {sep as DIRSEP} from 'path';
 import * as winston from 'winston';
 import BackupConnector from './BackupConnector';
 
-winston.add(winston.transports.File, { filename: 'murphy.log', level: 'debug' });
+if (!process.env.NODE_ENV) process.env.NODE_ENV = 'production';
+const DEBUG = (process.env.NODE_ENV === 'development');
+
+// Log to file
+winston.add(winston.transports.File, {
+  filename: (DEBUG ? '.' : os.tmpdir()) + DIRSEP + 'murphy.log',
+  level: DEBUG ? 'debug': 'info'
+});
 
 // electron.crashReporter.start();
 
