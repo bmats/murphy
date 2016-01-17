@@ -1,4 +1,5 @@
 import { dialog, shell } from 'electron';
+import * as _ from 'lodash';
 import { EventEmitter } from 'events';
 import * as winston from 'winston';
 import Config from './engine/Config';
@@ -22,6 +23,8 @@ interface ConfigUpdate {
   fileRegExps: string[];
   ui: {};
 }
+
+const UI_UPDATE_RATE = 300; // ms
 
 export default class BackupConnector {
   private _window: GitHubElectron.BrowserWindow;
@@ -85,12 +88,16 @@ export default class BackupConnector {
 
   private onBackupProgress(progress: number, message: string) {
     winston.debug('Backup progress', { progress: progress, progressMessage: message });
+    this._updateUIProgress('backup', progress, message);
+  }
+
+  private _updateUIProgress = _.throttle((type: string, progress: number, message: string) => {
     this._window.setProgressBar(progress);
-    this._ipcOut.send('backup-progress', {
+    this._ipcOut.send(`${type}-progress`, {
       progress: progress,
       message: message
     });
-  }
+  }, UI_UPDATE_RATE);
 
   onStartRestore(event, arg): void {
     const source = this._config.archives.find(a => a.name === arg.source.name);
@@ -122,11 +129,7 @@ export default class BackupConnector {
 
   private onRestoreProgress(progress: number, message: string) {
     winston.debug('Restore progress', { progress: progress, progressMessage: message });
-    this._window.setProgressBar(progress);
-    this._ipcOut.send('restore-progress', {
-      progress: progress,
-      message: message
-    });
+    this._updateUIProgress('restore', progress, message);
   }
 
   onAddSource(event, arg): void {

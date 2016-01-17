@@ -104,7 +104,7 @@ export default class Murphy extends React.Component<Props, State> {
   }
 
   private registerIpcCallbacks() {
-    ipcRenderer.on('backup-progress', _.throttle((event, arg) => {
+    ipcRenderer.on('backup-progress', (event, arg) => {
       if (this.state.backup.hasError) return;
 
       this.setState({
@@ -113,7 +113,7 @@ export default class Murphy extends React.Component<Props, State> {
           progressMessage: arg.message
         })
       });
-    }, 200));
+    });
     ipcRenderer.on('backup-complete', (event, arg) => {
       this.setState({
         backup: _.extend(this.state.backup, {
@@ -133,7 +133,7 @@ export default class Murphy extends React.Component<Props, State> {
       dialog.showErrorBox('Backup error', arg);
     });
 
-    ipcRenderer.on('restore-progress', _.throttle((event, arg) => {
+    ipcRenderer.on('restore-progress', (event, arg) => {
       if (this.state.restore.hasError) return;
 
       this.setState({
@@ -142,7 +142,7 @@ export default class Murphy extends React.Component<Props, State> {
           progressMessage: arg.message
         })
       });
-    }, 200));
+    });
     ipcRenderer.on('restore-complete', (event, arg) => {
       this.setState({
         restore: _.extend(this.state.restore, {
