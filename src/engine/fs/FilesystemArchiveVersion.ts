@@ -3,12 +3,14 @@ const FileQueue = require('filequeue');
 import * as path from 'path';
 import * as stream from 'stream';
 import {sep as DIRSEP} from 'path';
+import * as Promise from 'bluebird';
 import * as winston from 'winston';
 import * as yaml from 'js-yaml';
 import ArchiveVersion from '../ArchiveVersion';
 import {checkPathDoesNotExist, hashStream, mkdirAsync, mkdirpAsync, readFileAsync, writeFileAsync} from '../util';
 
 const fq = new FileQueue(100, true);
+const writeFileQueuedAsync: (file: string, data: any, options?: {} | string) => Promise<{}> = Promise.promisify(fq.writeFile.bind(fq));
 
 const FOLDER_NAME_REGEX = /(\d{4})-(\d{2})-(\d{2}) (\d{2})-(\d{2})-(\d{2})/;
 const VERSIONS_FOLDER: string = 'Versions';
@@ -140,7 +142,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
     case 'delete':
       // Write an empty "{filename}.deleted" file
       return mkdirpAsync(path.dirname(filePath + DELETED_SUFFIX))
-        .then(() => writeFileAsync(filePath + DELETED_SUFFIX, ''))
+        .then(() => writeFileQueuedAsync(filePath + DELETED_SUFFIX, ''))
         .then(() => {});
     }
   }
