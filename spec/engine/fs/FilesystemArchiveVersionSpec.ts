@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as stream from 'stream';
 import * as yaml from 'js-yaml';
 import * as MockFs from 'mock-fs';
-import * as MockDate from 'mockdate';
+const MockDate = require('mockdate');
 import FilesystemArchiveVersion from '../../../src/engine/fs/FilesystemArchiveVersion';
 
 describe('FilesystemArchiveVersion', () => {

@@ -6,8 +6,8 @@
 
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import PureRenderMixin from 'react-addons-pure-render-mixin';
-import {Motion, spring} from 'react-motion';
+const {PureRenderMixin} = require('react-addons-pure-render-mixin');
+const {Motion, spring} = require('react-motion');
 
 const styles = {
   root: {

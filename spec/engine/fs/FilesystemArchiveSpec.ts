@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as MockFs from 'mock-fs';
-import * as MockDate from 'mockdate';
+const MockDate = require('mockdate');
 import Archive from '../../../src/engine/Archive';
 import FilesystemArchive from '../../../src/engine/fs/FilesystemArchive';
 import FilesystemArchiveVersion from '../../../src/engine/fs/FilesystemArchiveVersion';

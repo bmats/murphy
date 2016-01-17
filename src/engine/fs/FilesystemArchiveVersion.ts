@@ -62,7 +62,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
       // Create folder and index
       mkdirAsync(this.folderPath)
         .then(this.apply.bind(this)) // write properties to file
-        .then(resolve)
+        .then(() => resolve())
         .catch((err) => {
           winston.error('Error creating archive version', { path: this.folderPath, error: err });
           reject(new Error(`Error creating archive at ${this.folderPath}`));

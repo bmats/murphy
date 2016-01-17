@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as MockFs from 'mock-fs';
-import * as MockDate from 'mockdate';
+const MockDate = require('mockdate');
 import Engine from '../../src/engine/Engine';
 import Source from '../../src/engine/Source';
 import Config from '../../src/engine/Config';

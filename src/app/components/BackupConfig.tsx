@@ -1,5 +1,5 @@
 import {remote, ipcRenderer} from 'electron';
-const dialog = remote.require('dialog');
+const dialog = remote.dialog;
 import * as path from 'path';
 import * as React from 'react';
 import MUI from 'material-ui';

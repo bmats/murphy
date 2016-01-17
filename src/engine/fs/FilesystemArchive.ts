@@ -59,7 +59,7 @@ export default class FilesystemArchive extends Archive {
     return new Promise<void>((resolve, reject) => {
       // Make folder
       mkdirpAsync(this.path)
-        .then(resolve)
+        .then(() => resolve())
         .catch((err) => {
           winston.error('Error making archive folder', { path: this.path, error: err });
           reject(new Error('Error creating archive folder'));
@@ -70,7 +70,7 @@ export default class FilesystemArchive extends Archive {
         .catch(err => { winston.info('Error writing readme (already exists?)', { error: err }) })
         .then(() => mkdirpAsync(this.path + DIRSEP + LATEST_FOLDER))
         .then(() => mkdirpAsync(this.path + DIRSEP + VERSIONS_FOLDER))
-        .then(resolve)
+        .then(() => resolve())
         .catch((err) => {
           winston.error('Error building archive', { error: err });
           reject(new Error('Error building archive'));

@@ -1,6 +1,5 @@
 import {remote, ipcRenderer, shell} from 'electron';
-const dialog = remote.require('dialog');
-import * as _ from 'lodash';
+const dialog = remote.dialog;
 import * as React from 'react';
 import SwipeableViews from './SwipeableViewsMaxHeight';
 import MUI from 'material-ui';
@@ -122,7 +121,7 @@ export default class Murphy extends React.Component<Props, State> {
       if (this.state.backup.hasError) return;
 
       this.setState({
-        backup: _.extend(this.state.backup, {
+        backup: Object.assign({}, this.state.backup, {
           progress: arg.progress,
           progressMessage: arg.message
         })
@@ -130,7 +129,7 @@ export default class Murphy extends React.Component<Props, State> {
     });
     ipcRenderer.on('backup-complete', (event, arg) => {
       this.setState({
-        backup: _.extend(this.state.backup, {
+        backup: Object.assign({}, this.state.backup, {
           isRunning: false
         }),
         backupStats: arg.stats
@@ -138,7 +137,7 @@ export default class Murphy extends React.Component<Props, State> {
     });
     ipcRenderer.on('backup-error', (event, arg) => {
       this.setState({
-        backup: _.extend(this.state.backup, {
+        backup: Object.assign({}, this.state.backup, {
           isRunning: false,
           hasError: true,
           progressMessage: arg
@@ -151,7 +150,7 @@ export default class Murphy extends React.Component<Props, State> {
       if (this.state.restore.hasError) return;
 
       this.setState({
-        restore: _.extend(this.state.restore, {
+        restore: Object.assign({}, this.state.restore, {
           progress: arg.progress,
           progressMessage: arg.message
         })
@@ -159,14 +158,14 @@ export default class Murphy extends React.Component<Props, State> {
     });
     ipcRenderer.on('restore-complete', (event, arg) => {
       this.setState({
-        restore: _.extend(this.state.restore, {
+        restore: Object.assign({}, this.state.restore, {
           isRunning: false
         })
       });
     });
     ipcRenderer.on('restore-error', (event, arg) => {
       this.setState({
-        restore: _.extend(this.state.restore, {
+        restore: Object.assign({}, this.state.restore, {
           isRunning: false,
           hasError: true,
           progressMessage: arg
