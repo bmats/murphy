@@ -63,6 +63,20 @@ export default class Murphy extends React.Component<Props, State> {
     };
 
     this.registerIpcCallbacks();
+
+    // Prompt before closing if a job is running
+    window.onbeforeunload = (e) => {
+      if (this.state.backup.isRunning || this.state.restore.isRunning) {
+        const result = dialog.showMessageBox(remote.BrowserWindow.getFocusedWindow(), {
+          type: 'warning',
+          buttons: ['Close', 'Cancel'],
+          title: 'Murphy',
+          message: 'Are you sure you want to close Murphy?\nThis will stop your ' +
+            (this.state.backup.isRunning ? 'backup' : 'restore') + '.'
+        });
+        e.returnValue = (result === 0); // 'Close' button
+      }
+    };
   }
 
   static childContextTypes: any = {

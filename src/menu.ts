@@ -44,7 +44,6 @@ let template: GitHubElectron.MenuItemOptions[] = [
     submenu: [
       {
         label: 'Reload',
-        accelerator: 'CmdOrCtrl+R',
         click: function(item, focusedWindow) {
           if (focusedWindow)
             focusedWindow.reload();
