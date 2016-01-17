@@ -3,7 +3,7 @@ import * as winston from 'winston';
 import Source from './Source';
 import Archive from './Archive';
 
-const DEFAULT_REGEXPS = [/Cache/, /cache/, /\._/, /Thumbs\.db/]; // simple (no complex operators) for UI
+const DEFAULT_REGEXPS = [/\._/, /Thumbs\.db/]; // simple string (no regex operators) for UI
 
 export default class Config {
   private _sources: Source[] = [];
