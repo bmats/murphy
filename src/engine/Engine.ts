@@ -135,14 +135,12 @@ class BackupJob extends Job {
    * Find which files have been added and modified since the last version and copy them.
    */
   private writeSourceFiles(): Promise<any> {
-    this.updateStatus(this._progress.advance().value, 'Copying files');
+    this.updateStatus(this._progress.advance().value, 'Looking for files to copy');
 
     return Promise.map(this.sourceFiles, (file, i) =>
       Promise.each(this.versions, (version: ArchiveVersion) => // sequentially
         version.getFileStatus(file)
           .then(status => {
-            this.updateStatus(this._progress.current(i / this.sourceFiles.length).value, `Copying "${file}"`);
-
             switch (status) {
             case 'add':
             case 'modify':
@@ -152,6 +150,7 @@ class BackupJob extends Job {
                     // If file has changed
                     const readStream = this.source.createReadStream(file);
                     return resolveOnOpen(readStream)
+                      .then(() => { this.updateStatus(this._progress.current(i / this.sourceFiles.length).value, `Copying "${file}"`) })
                       .then(() => this.newVersion.writeFile(file, 'modify', readStream))
                       .then(() => { readStream.destroy() })
                       .then(() => Promise.all([Promise.resolve(checksums[0]), this.newVersion.getFileChecksum(file)]))
@@ -162,6 +161,7 @@ class BackupJob extends Job {
             case 'delete':
               const readStream = this.source.createReadStream(file);
               return resolveOnOpen(readStream)
+                .then(() => { this.updateStatus(this._progress.current(i / this.sourceFiles.length).value, `Copying "${file}"`) })
                 .then(() => this.newVersion.writeFile(file, 'add', readStream))
                 .then(() => { readStream.destroy() })
                 .then(() => Promise.all([this.source.getFileChecksum(file), this.newVersion.getFileChecksum(file)]))
@@ -173,6 +173,7 @@ class BackupJob extends Job {
         // Not rejected, meaning version was not found, so file is new
         const readStream = this.source.createReadStream(file);
         return resolveOnOpen(readStream)
+          .then(() => { this.updateStatus(this._progress.current(i / this.sourceFiles.length).value, `Copying "${file}"`) })
           .then(() => this.newVersion.writeFile(file, 'add', readStream))
           .then(() => { readStream.destroy() })
           .then(() => Promise.all([this.source.getFileChecksum(file), this.newVersion.getFileChecksum(file)]))
@@ -302,8 +303,6 @@ class RestoreJob extends Job {
       const version: ArchiveVersion = this.fileVersions[file];
       return version.getFileStatus(file)
         .then(status => {
-          this.updateStatus(this._progress.current(i / files.length).value, `Copying "${file}"`);
-
           switch (status) {
           case 'add':
           case 'modify':
@@ -326,6 +325,7 @@ class RestoreJob extends Job {
                 writeStream.on('error', onError);
 
                 writeStream.on('open', () => {
+                  this.updateStatus(this._progress.current(i / files.length).value, `Copying "${file}"`);
                   readStream.pipe(writeStream);
                 });
                 writeStream.once('finish', () => {
