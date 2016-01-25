@@ -22,7 +22,8 @@ export default class ProgressCard extends React.Component<Props, {}> {
     return {
       progressMessage: {
         fontSize: 14,
-        marginTop: padding / 2
+        marginTop: padding / 2,
+        wordWrap: 'break-word'
       },
       error: {
         color: 'red'
