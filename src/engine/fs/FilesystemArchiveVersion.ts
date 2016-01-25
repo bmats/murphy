@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 const FileQueue = require('filequeue');
+import * as moment from 'moment';
 import * as path from 'path';
 import * as stream from 'stream';
 import {sep as DIRSEP} from 'path';
@@ -35,7 +36,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
   constructor(date: Date, archivePath: string) {
     super(date);
     this._archivePath = archivePath;
-    this._folderName = FilesystemArchiveVersion.formatDate(date);
+    this._folderName = moment(date).format('YYYY-MM-DD HH-mm-ss');
   }
 
   get folderName(): string {
@@ -228,15 +229,5 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
       const info = index[file];
       data[info.status][file] = info.checksum || '';
     }
-  }
-
-  private static formatDate(date: Date) {
-    const year   = date.getFullYear();
-    const month  = (date.getMonth()   <  9 ? '0' : '') + (date.getMonth() + 1);
-    const day    = (date.getDate()    < 10 ? '0' : '') + date.getDate();
-    const hour   = (date.getHours()   < 10 ? '0' : '') + date.getHours();
-    const minute = (date.getMinutes() < 10 ? '0' : '') + date.getMinutes();
-    const second = (date.getSeconds() < 10 ? '0' : '') + date.getSeconds();
-    return `${year}-${month}-${day} ${hour}-${minute}-${second}`;
   }
 }

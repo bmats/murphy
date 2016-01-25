@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as moment from 'moment';
 import * as path from 'path';
 import * as Promise from 'bluebird';
 import * as winston from 'winston';
@@ -186,7 +187,7 @@ export default class FilesystemArchive extends Archive {
   }
 
   private getReadMeText(): string {
-    const time: string = new Date().toString();
-    return `${this.name}\r\nCreated at ${time}.\r\n\r\n` + README_BODY;
+    const time: string = moment().format('dddd, MMMM D, YYYY [at] h:mm:ss A');
+    return `${this.name}\r\nCreated on ${time}.\r\n\r\n` + README_BODY;
   }
 }

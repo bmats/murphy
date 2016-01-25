@@ -1,5 +1,6 @@
 import {remote, ipcRenderer} from 'electron';
 const dialog = remote.dialog;
+import * as moment from 'moment';
 import * as path from 'path';
 import * as React from 'react';
 import MUI from 'material-ui';
@@ -140,7 +141,7 @@ export default class RestoreConfig extends React.Component<Props, State> {
     let versionIndex = this.state.archiveVersions.indexOf(this.props.version);
     if (versionIndex < 0) versionIndex = 0;
     const versionItems = this.state.archiveVersions.map((v, i) =>
-      <MUI.MenuItem key={i} primaryText={RestoreConfig.formatDate(v.date)} value={i} />);
+      <MUI.MenuItem key={i} primaryText={moment(v.date).format('MMM D, YYYY h:mm A')} value={i} />);
 
     let destinationText;
     if (this.props.destination) {
@@ -172,15 +173,5 @@ export default class RestoreConfig extends React.Component<Props, State> {
         </div>
       </div>
     );
-  }
-
-  private static formatDate(date: Date) {
-    const year   = date.getFullYear();
-    const month  = (date.getMonth()   <  9 ? '0' : '') + (date.getMonth() + 1);
-    const day    = (date.getDate()    < 10 ? '0' : '') + date.getDate();
-    const hour   = (date.getHours()   < 10 ? '0' : '') + date.getHours();
-    const minute = (date.getMinutes() < 10 ? '0' : '') + date.getMinutes();
-    const second = (date.getSeconds() < 10 ? '0' : '') + date.getSeconds();
-    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
   }
 }

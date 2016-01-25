@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import * as fs from 'fs';
 const FileQueue = require('filequeue');
+import * as moment from 'moment';
 import * as path from 'path';
 import * as Promise from 'bluebird';
 import * as stream from 'stream';
@@ -361,13 +362,15 @@ class RestoreJob extends Job {
   }
 
   private _getSummaryText() {
-    const time: string = new Date().toString();
-    const versionDate: string = this.version.date.toString(); // TODO: format nicely
+    const time: string = moment().format('dddd, MMMM D, YYYY [at] h:mm:ss A');
+    const versionDate: string = moment(this.version.date).format('dddd, MMMM D, YYYY [at] h:mm:ss A');
 
-    return `Restored backup "${this.source.name}" at version ${versionDate} at ${time}.\r\n\r\nFiles:\r\n` +
+    return `Restored backup "${this.source.name}" from ${versionDate}.\r\n` +
+        `Completed on ${time}.\r\n\r\n` +
+        'Restored files (file backup date):\r\n' +
       Object.keys(this.fileVersions).map(file => {
-        const fileVersionDate = this.fileVersions[file].date.toString(); // TODO: format nicely
-        return `${file} (${fileVersionDate})\r\n`;
+        const fileVersionDate = moment(this.fileVersions[file].date).format('YYYY-MM-DD HH:mm:ss');
+        return `${file}\t(${fileVersionDate})\r\n`;
       }).join('');
   }
 }

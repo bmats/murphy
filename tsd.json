@@ -46,6 +46,12 @@
     },
     "react/react-dom.d.ts": {
       "commit": "dc9dabe74a5be62613b17a3605309783a12ff28a"
+    },
+    "moment/moment-node.d.ts": {
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
+    },
+    "moment/moment.d.ts": {
+      "commit": "7fffbd3e040a93c244777e3be04cd6223ac69301"
     }
   }
 }
