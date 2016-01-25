@@ -367,10 +367,14 @@ describe('FilesystemArchiveVersion', () => {
         filesOpenedCount += openFiles.length;
 
         openFiles.forEach(stream => stream.destroy());
-        openFiles.length = 0;
 
         if (filesOpenedCount < FILE_COUNT) {
-          setTimeout(checkForOpenedFiles, FILE_OPEN_WAIT);
+          if (openFiles.length > 0) {
+            openFiles.length = 0;
+            setTimeout(checkForOpenedFiles, FILE_OPEN_WAIT);
+          } else {
+            fail('No files opened.');
+          }
         } else {
           done();
         }
