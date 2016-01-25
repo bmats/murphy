@@ -17,8 +17,13 @@ const VERSIONS_FOLDER: string = 'Versions';
 const INDEX_FILE: string = '.index';
 const DELETED_SUFFIX: string = '.deleted';
 
+interface FileInfo {
+  status: string;
+  checksum: string;
+}
+
 interface FileIndex {
-  [file: string]: string;
+  [file: string]: FileInfo;
 }
 
 export default class FilesystemArchiveVersion extends ArchiveVersion {
@@ -81,7 +86,7 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
         .then(contents => {
           const parsed = yaml.safeLoad(contents);
           this._source = parsed.source;
-          this._index  = parsed.files || {}; // TODO: normalize directory separator?
+          this._index  = FilesystemArchiveVersion.parseIndexFile(parsed); // TODO: normalize directory separator?
           // TODO: validate file modes and files?
         })
         .then(resolve)
@@ -97,22 +102,25 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
   }
 
   getFileStatus(file: string): Promise<string> {
-    return Promise.resolve(this._index[file]);
+    return Promise.resolve(this._index[file] && this._index[file].status);
   }
 
-  writeFile(file: string, status: string, readStream?: stream.Readable): Promise<void> {
+  writeFile(file: string, status: string, readStream?: stream.Readable, checksum?: string): Promise<void> {
     if (['add', 'modify', 'delete'].indexOf(status) < 0)
       throw new Error(`Invalid status "${status}"`);
 
     // Save status to index (will be written to file in apply())
-    this._index[file] = status;
+    this._index[file] = {
+      status: status,
+      checksum: checksum
+    };
 
     const filePath = this.folderPath + DIRSEP + file;
     switch (status) {
     case 'add':
     case 'modify':
-      if (!readStream)
-        throw new Error(`readStream required for "${status}" status`);
+      if (!readStream || !checksum)
+        throw new Error(`readStream and checksum required for "${status}" status`);
 
       return Promise.all([
         mkdirpAsync(path.dirname(filePath)),
@@ -156,39 +164,15 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
   }
 
   getFileChecksum(file: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      const stream: stream.Readable = this.createReadStream(file);
-      if (!stream)
-        reject(new Error('File not in archive'));
-
-      stream.on('open', () => {
-        hashStream(stream)
-          .then(result => {
-            stream.destroy();
-            resolve(result);
-          })
-          .catch(err => {
-            winston.error('Archive version file hashing error', { file: file, error: err });
-            stream.destroy();
-            reject(err);
-          });
-      });
-      stream.on('error', err => {
-        winston.error('Error opening archive version file', { file: file, error: err });
-        stream.destroy();
-        reject(err);
-      });
-    });
+    return Promise.resolve(this._index[file] && this._index[file].checksum);
   }
 
   apply(): Promise<void> {
     return new Promise<void>((resolve: () => void, reject: (err) => void) => {
-      const data: string = yaml.safeDump({
-        source: this._source,
-        files: this._index
-      });
+      const data = { source: this._source };
+      FilesystemArchiveVersion.buildIndexFile(data, this._index);
 
-      writeFileAsync(this.folderPath + DIRSEP + INDEX_FILE, data)
+      writeFileAsync(this.folderPath + DIRSEP + INDEX_FILE, yaml.safeDump(data))
         .then(resolve)
         .catch(err => {
           winston.error('Error persisting archive version to file', { version: this.folderPath, error: err });
@@ -219,6 +203,31 @@ export default class FilesystemArchiveVersion extends ArchiveVersion {
       return new FilesystemArchiveVersion(date, archivePath);
     }
     return null;
+  }
+
+  static parseIndexFile(data: any): FileIndex {
+    const index: FileIndex = {};
+    ['add', 'modify', 'delete'].forEach(status => {
+      if (!data[status]) return;
+      for (let file in data[status]) {
+        index[file] = {
+          status: status,
+          checksum: data[status][file]
+        };
+      }
+    });
+    return index;
+  }
+
+  static buildIndexFile(data: any, index: FileIndex) {
+    data['add'] = {};
+    data['modify'] = {};
+    data['delete'] = {};
+
+    for (let file in index) {
+      const info = index[file];
+      data[info.status][file] = info.checksum || '';
+    }
   }
 
   private static formatDate(date: Date) {

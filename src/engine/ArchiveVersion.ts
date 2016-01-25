@@ -27,7 +27,7 @@ abstract class ArchiveVersion {
    * Write a stream to a file in the version and save the file status.
    * If the status is "delete", the stream can be omitted.
    */
-  abstract writeFile(file: string, status: string, stream?: stream.Readable): Promise<void>;
+  abstract writeFile(file: string, status: string, stream?: stream.Readable, checksum?: string): Promise<void>;
 
   /**
    * Return a stream for reading the file.

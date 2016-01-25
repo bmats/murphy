@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as stream from 'stream';
 import * as yaml from 'js-yaml';
@@ -26,7 +27,7 @@ describe('FilesystemArchiveVersion', () => {
   describe('.source', () => {
     beforeEach(() => {
       MockFs({
-        'Archive/Versions/2018-01-11 05-00-00/.index': 'source: My Computer\nfiles:\n'
+        'Archive/Versions/2018-01-11 05-00-00/.index': 'source: My Computer\n'
       })
     });
 
@@ -76,7 +77,9 @@ describe('FilesystemArchiveVersion', () => {
           const contents = fs.readFileSync(archivePath + '/Versions/2018-01-11 05-00-00/.index', { encoding: 'utf8' });
           const data = yaml.safeLoad(contents);
           expect(data.source).toBe(require('os').hostname());
-          expect(data.files).not.toBeUndefined(); // will be null when empty
+          expect(data.add).not.toBeUndefined(); // will be null when empty
+          expect(data.modify).not.toBeUndefined();
+          expect(data.delete).not.toBeUndefined();
         })
         .catch(err => fail(err))
         .then(done);
@@ -108,7 +111,7 @@ describe('FilesystemArchiveVersion', () => {
     beforeEach(() => {
       MockFs({
         'Archive/Versions/2018-01-11 05-00-00/.index':
-          'source: My Computer\nfiles:\n  file1.txt: add\n  folder/photo.jpg: modify\n  yolo.txt: delete\n'
+          'source: My Computer\nadd:\n  file1.txt: abc123\nmodify:\n  folder/photo.jpg: abc123\ndelete:\n  yolo.txt:\n'
       })
     });
 
@@ -140,7 +143,7 @@ describe('FilesystemArchiveVersion', () => {
     beforeEach(() => {
       MockFs({
         'Archive/Versions/2018-01-11 05-00-00/.index':
-          'source: My Computer\nfiles:\n  file1.txt: add\n  folder/photo.jpg: modify\n  yolo.txt: delete\n'
+          'source: My Computer\nadd:\n  file1.txt: abc123\nmodify:\n  folder/photo.jpg: abc123\ndelete:\n  yolo.txt:\n'
       })
     });
 
@@ -162,7 +165,7 @@ describe('FilesystemArchiveVersion', () => {
     beforeEach(() => {
       MockFs({
         'Archive/Versions/2018-01-11 05-00-00/.index':
-          'source: My Computer\nfiles:\n  file1.txt: add\n'
+          'source: My Computer\nadd:\n  file1.txt: abc123\n'
       })
     });
 
@@ -178,6 +181,15 @@ describe('FilesystemArchiveVersion', () => {
         .catch(err => fail(err))
         .then(done);
     });
+
+    it('returns undefined if the file is not in the index', (done) => {
+      const version = new FilesystemArchiveVersion(new Date(), 'Archive');
+      version.load()
+        .then(() => version.getFileStatus('bad_file.txt'))
+        .then(status => expect(status).toBeUndefined())
+        .catch(err => fail(err))
+        .then(done);
+    });
   });
 
   describe('.writeFile()', () => {
@@ -185,7 +197,7 @@ describe('FilesystemArchiveVersion', () => {
 
     beforeEach(() => {
       MockFs({
-        'Archive/Versions/2018-01-11 05-00-00/.index': 'source: My Computer\nfiles:\n'
+        'Archive/Versions/2018-01-11 05-00-00/.index': 'source: My Computer\n'
       });
     });
 
@@ -203,10 +215,14 @@ describe('FilesystemArchiveVersion', () => {
         readStream.push(contents);
         readStream.push(null);
 
+        const hash = crypto.createHash('sha1').update(contents).digest('hex');
+
         version.load()
-          .then(() => version.writeFile(file, status, readStream))
+          .then(() => version.writeFile(file, status, readStream, hash))
           .then(() => version.getFileStatus(file))
           .then(s => expect(s).toBe(status))
+          .then(() => version.getFileChecksum(file))
+          .then(c => expect(c).toBe(hash))
           .then(() => {
             const stream = version.createReadStream(file);
             let data = '';
@@ -245,15 +261,18 @@ describe('FilesystemArchiveVersion', () => {
 
       const version = new FilesystemArchiveVersion(new Date(), 'Archive');
       version.load()
-        .then(() => version.writeFile('this/is/a/pretty/deep/file.txt', 'add', emptyStream))
+        .then(() => version.writeFile('this/is/a/pretty/deep/file.txt', 'add', emptyStream, 'da39a3ee5e6b4b0d3255bfef95601890afd80709'))
         .catch(err => fail(err))
         .then(done);
     });
 
-    it('fails if stream not passed with add/modify mode', (done) => {
+    it('fails if stream and checksum not passed with add/modify mode', (done) => {
       const version = new FilesystemArchiveVersion(new Date(), 'Archive');
       version.load()
         .then(() => version.writeFile('file_added.txt', 'add'))
+        .then(() => fail('Expected error'))
+        .catch(err => expect(err).not.toBeUndefined())
+        .then(() => version.writeFile('file_modified.txt', 'modify'))
         .then(() => fail('Expected error'))
         .catch(err => expect(err).not.toBeUndefined())
         .then(done);
@@ -275,7 +294,7 @@ describe('FilesystemArchiveVersion', () => {
     beforeAll(() => {
       MockFs({
         'Archive/Versions/2018-01-11 05-00-00': {
-          '.index': 'source: My Computer\nfiles:\n  folder/file.txt: add\n',
+          '.index': 'source: My Computer\nadd:\n  folder/file.txt: 2fd4e1c67a2d28fced849ee1bb76e7391b93eb12\n',
           folder: {
             'file.txt': contents
           }
@@ -328,7 +347,7 @@ describe('FilesystemArchiveVersion', () => {
 
       const filesystem: any = {
         'Archive/Versions/2018-01-11 05-00-00': {
-          '.index': 'source: My Computer\nfiles:\n' + files.reduce((str, file) => str += `  ${file}: add\n`, '')
+          '.index': 'source: My Computer\nadd:\n' + files.reduce((str, file) => str += `  ${file}: da39a3ee5e6b4b0d3255bfef95601890afd80709\n`, '')
         }
       };
       files.forEach(file => filesystem['Archive/Versions/2018-01-11 05-00-00'][file] = '');
@@ -372,7 +391,7 @@ describe('FilesystemArchiveVersion', () => {
     beforeEach(() => {
       MockFs({
         'Archive/Versions/2018-01-11 05-00-00': {
-          '.index': 'source: My Computer\nfiles:\n  folder/file.txt: add\n',
+          '.index': 'source: My Computer\nadd:\n  folder/file.txt: thiswasnotcomputed\n',
           folder: {
             'file.txt': 'The quick brown fox jumps over the lazy dog'
           }
@@ -384,21 +403,21 @@ describe('FilesystemArchiveVersion', () => {
       MockFs.restore();
     });
 
-    it('computes correct SHA1', (done) => {
+    it('gets the SHA1 from the index', (done) => {
       const version = new FilesystemArchiveVersion(new Date(), 'Archive');
       version.load()
         .then(() => version.getFileChecksum('folder/file.txt'))
-        .then(checksum => expect(checksum).toBe('2fd4e1c67a2d28fced849ee1bb76e7391b93eb12'))
+        .then(checksum => expect(checksum).toBe('thiswasnotcomputed'))
         .catch(err => fail(err))
         .then(done);
     });
 
-    it('fails with invalid file', (done) => {
+    it('returns undefined if the file is not in the index', (done) => {
       const version = new FilesystemArchiveVersion(new Date(), 'Archive');
       version.load()
         .then(() => version.getFileChecksum('bad_file.txt'))
-        .then(checksum => fail('Expected error'))
-        .catch(err => expect(err).not.toBeUndefined())
+        .then(checksum => expect(checksum).toBeUndefined())
+        .catch(err => fail(err))
         .then(done);
     });
   });
@@ -407,9 +426,9 @@ describe('FilesystemArchiveVersion', () => {
     beforeEach(() => {
       MockFs({
         'Archive/Versions/2018-01-11 05-00-00': {
-          '.index': 'source: My Computer\nfiles:\n  folder/file.txt: add\n',
+          '.index': 'source: My Computer\nadd:\n  folder/file.txt: 8f93542443e98f41fe98e97d6d2a147193b1b005\n',
           folder: {
-            'file.txt': ''
+            'file.txt': 'test file'
           }
         }
       });
@@ -426,17 +445,21 @@ describe('FilesystemArchiveVersion', () => {
 
       const version = new FilesystemArchiveVersion(new Date(), 'Archive');
       version.load()
-        .then(() => version.writeFile('Pictures/grumpycat.jpg', 'modify', emptyStream))
+        .then(() => version.writeFile('Pictures/grumpycat.jpg', 'modify', emptyStream, 'da39a3ee5e6b4b0d3255bfef95601890afd80709'))
         .then(() => version.writeFile('folder/deleted.txt', 'delete'))
         .then(version.apply.bind(version))
         .then(() => {
           const contents = fs.readFileSync('Archive/Versions/2018-01-11 05-00-00/.index', { encoding: 'utf8' });
           const data = yaml.safeLoad(contents);
           expect(data.source).toBe('My Computer');
-          expect(data.files).toEqual({
-            'folder/file.txt': 'add',
-            'Pictures/grumpycat.jpg': 'modify',
-            'folder/deleted.txt': 'delete'
+          expect(data.add).toEqual({
+            'folder/file.txt': '8f93542443e98f41fe98e97d6d2a147193b1b005'
+          });
+          expect(data.modify).toEqual({
+            'Pictures/grumpycat.jpg': 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+          });
+          expect(data.delete).toEqual({
+            'folder/deleted.txt': ''
           });
         })
         .catch(err => fail(err))
@@ -449,6 +472,64 @@ describe('FilesystemArchiveVersion', () => {
       const folder = '2018-01-11 05-00-00';
       const version = FilesystemArchiveVersion.fromFolderName(folder, 'Archive');
       expect(version.folderName).toBe(folder); // .folderName is reformatted
+    });
+  });
+
+  describe('::parseIndexFile()', () => {
+    it('parses a standard file', () => {
+      const data = {
+        add: {
+          'file.txt': '356a192b7913b04c54574d18c28d46e6395428ab',
+          'folder/file2.txt': 'da4b9237bacccdf19c0760cab7aec4a8359010b0',
+        },
+        modify: {
+          'file3.txt': '77de68daecd823babbb58edb1c8e14d7106e83bb',
+          'folder/file4.txt': '1b6453892473a467d07372d45eb05abc2031647a',
+        },
+        delete: {
+          'file5.txt': '',
+          'folder/file6.txt': '',
+        }
+      };
+      const output = FilesystemArchiveVersion.parseIndexFile(data);
+      expect(output).toEqual({
+        'file.txt': { status: 'add', checksum: data.add['file.txt'] },
+        'folder/file2.txt': { status: 'add', checksum: data.add['folder/file2.txt'] },
+        'file3.txt': { status: 'modify', checksum: data.modify['file3.txt'] },
+        'folder/file4.txt': { status: 'modify', checksum: data.modify['folder/file4.txt'] },
+        'file5.txt': { status: 'delete', checksum: '' },
+        'folder/file6.txt': { status: 'delete', checksum: '' }
+      });
+    });
+  });
+
+  describe('::buildIndexFile()', () => {
+    it('builds the correct format', () => {
+      const index: { [file: string]: { status: string; checksum: string; } } = {
+        'file.txt': { status: 'add', checksum: '356a192b7913b04c54574d18c28d46e6395428ab' },
+        'folder/file2.txt': { status: 'add', checksum: 'da4b9237bacccdf19c0760cab7aec4a8359010b0' },
+        'file3.txt': { status: 'modify', checksum: '77de68daecd823babbb58edb1c8e14d7106e83bb' },
+        'folder/file4.txt': { status: 'modify', checksum: '1b6453892473a467d07372d45eb05abc2031647a' },
+        'file5.txt': { status: 'delete', checksum: '' },
+        'folder/file6.txt': { status: 'delete', checksum: '' }
+      };
+
+      const output = {};
+      FilesystemArchiveVersion.buildIndexFile(output, index);
+      expect(output).toEqual({
+        add: {
+          'file.txt': index['file.txt'].checksum,
+          'folder/file2.txt': index['folder/file2.txt'].checksum,
+        },
+        modify: {
+          'file3.txt': index['file3.txt'].checksum,
+          'folder/file4.txt': index['folder/file4.txt'].checksum,
+        },
+        delete: {
+          'file5.txt': '',
+          'folder/file6.txt': '',
+        }
+      });
     });
   });
 });

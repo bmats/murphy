@@ -14,7 +14,7 @@ export default class DummyArchiveVersion extends ArchiveVersion {
     return null;
   }
 
-  writeFile(file: string, status: string, stream?: stream.Readable): Promise<void> {
+  writeFile(file: string, status: string, stream?: stream.Readable, checksum?: string): Promise<void> {
     return null;
   }
 

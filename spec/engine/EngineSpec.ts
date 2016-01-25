@@ -83,7 +83,7 @@ describe('Engine', () => {
           Latest: {},
           Versions: {
             '2016-01-01 12-00-01': {
-              '.index': 'source: My Computer\nfiles:\n  folder/file1.txt: add\n  folder/file2.txt: add\n  file3.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  folder/file1.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\n  folder/file2.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\n  file3.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\n',
               folder: {
                 'file1.txt': '',
                 'file2.txt': ''
@@ -116,14 +116,14 @@ describe('Engine', () => {
         .then(done);
     });
 
-    it('indicates files are deleted if they are not longer in the source', (done) => {
+    it('indicates files are deleted if they are no longer in the source', (done) => {
       MockFs({
         Source: {},
         Archive: {
           Latest: {},
           Versions: {
             '2016-01-01 12-00-01': {
-              '.index': 'source: My Computer\nfiles:\n  folder/file1.txt: add\n  folder/file2.txt: add\n  file3.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  folder/file1.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\n  folder/file2.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\n  file3.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\n',
               folder: {
                 'file1.txt': '',
                 'file2.txt': ''
@@ -163,19 +163,19 @@ describe('Engine', () => {
           Latest: {},
           Versions: {
             '2014-01-01 12-00-01': {
-              '.index': 'source: My Computer\nfiles:\n  file4.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file4.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\n',
               'file4.txt': ''
             },
             '2015-01-01 12-00-01': {
-              '.index': 'source: My Computer\nfiles:\n  file3.txt: add\n  file4.txt: delete\n',
+              '.index': 'source: My Computer\nadd:\n  file3.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\ndelete:\n  file4.txt:\n',
               'file3.txt': ''
             },
             '2016-01-01 12-00-01': {
-              '.index': 'source: My Computer\nfiles:\n  file3.txt: delete\n  file5.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file5.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\ndelete:\n  file3.txt:\n',
               'file5.txt': ''
             },
             '2017-01-01 12-00-01': {
-              '.index': 'source: My Computer\nfiles:\n  file4.txt: add\n  file5.txt: delete\n',
+              '.index': 'source: My Computer\nadd:\n  file4.txt: da39a3ee5e6b4b0d3255bfef95601890afd80709\ndelete:\n  file5.txt:\n',
               'file4.txt': ''
             }
           }
@@ -420,7 +420,7 @@ describe('Engine', () => {
         Archive: {
           Versions: {
             '2016-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  folder/file1.txt: add\n  folder/file2.txt: add\n  file3.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  folder/file1.txt: a379624177abc4679cafafa8eae1d73e1478aaa6\n  folder/file2.txt: 693a1c717811546a82e06145f0d12f4e35710bb9\n  file3.txt: 73d67db1dea761091feaa0437fc7816e8f5c3c38\n',
               folder: {
                 'file1.txt': 'file1 contents',
                 'file2.txt': 'file2 contents'
@@ -452,12 +452,12 @@ describe('Engine', () => {
         Archive: {
           Versions: {
             '2015-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n  file2.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file1.txt: a379624177abc4679cafafa8eae1d73e1478aaa6\n  file2.txt: 693a1c717811546a82e06145f0d12f4e35710bb9\n',
               'file1.txt': 'file1 contents',
               'file2.txt': 'file2 contents'
             },
             '2016-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: modify\n',
+              '.index': 'source: My Computer\nmodify:\n  file1.txt: 4d540dba07948a3e94722b1bb0620b76d054959b\n',
               'file1.txt': 'file1 contents 2',
             }
           }
@@ -483,18 +483,18 @@ describe('Engine', () => {
         Archive: {
           Versions: {
             '2015-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n  file2.txt: add\n  file3.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file1.txt: a379624177abc4679cafafa8eae1d73e1478aaa6\n  file2.txt: 693a1c717811546a82e06145f0d12f4e35710bb9\n  file3.txt: 73d67db1dea761091feaa0437fc7816e8f5c3c38\n',
               'file1.txt': 'file1 contents',
               'file2.txt': 'file2 contents',
               'file3.txt': 'file3 contents'
             },
             '2016-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: modify\n  file2.txt: modify\n',
+              '.index': 'source: My Computer\nmodify:\n  file1.txt: 4d540dba07948a3e94722b1bb0620b76d054959b\n  file2.txt: 8f5877b1ee63da2e57bec98392366d787f473a2c\n',
               'file1.txt': 'file1 contents 2',
               'file2.txt': 'file2 contents 2',
             },
             '2017-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: modify\n',
+              '.index': 'source: My Computer\nmodify:\n  file1.txt: c6a4a260296c8ff1e3ca5aac6f180a89cc59a9e4\n',
               'file1.txt': 'file1 contents 3'
             }
           }
@@ -521,11 +521,11 @@ describe('Engine', () => {
         Archive: {
           Versions: {
             '2015-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file1.txt: a379624177abc4679cafafa8eae1d73e1478aaa6\n',
               'file1.txt': 'file1 contents'
             },
             '2016-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: delete\n'
+              '.index': 'source: My Computer\ndelete:\n  file1.txt:\n'
             }
           }
         }
@@ -548,14 +548,14 @@ describe('Engine', () => {
         Archive: {
           Versions: {
             '2015-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file1.txt: a379624177abc4679cafafa8eae1d73e1478aaa6\n',
               'file1.txt': 'file1 contents'
             },
             '2016-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: delete\n'
+              '.index': 'source: My Computer\ndelete:\n  file1.txt:\n'
             },
             '2017-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file1.txt: 4d540dba07948a3e94722b1bb0620b76d054959b\n',
               'file1.txt': 'file1 contents 2'
             }
           }
@@ -582,7 +582,7 @@ describe('Engine', () => {
         Archive: {
           Versions: {
             '2015-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file1.txt: a379624177abc4679cafafa8eae1d73e1478aaa6\n',
               'file1.txt': 'file1 contents'
             }
           }
@@ -604,15 +604,15 @@ describe('Engine', () => {
         Archive: {
           Versions: {
             '2015-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file1.txt: a379624177abc4679cafafa8eae1d73e1478aaa6\n',
               'file1.txt': 'file1 contents'
             },
             '2016-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file2.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file2.txt: 693a1c717811546a82e06145f0d12f4e35710bb9\n',
               'file2.txt': 'file2 contents'
             },
             '2017-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file3.txt: add\n  file2.txt: modify\n',
+              '.index': 'source: My Computer\nadd:\n  file3.txt: 8f5877b1ee63da2e57bec98392366d787f473a2c\nmodify:\n  file2.txt: 73d67db1dea761091feaa0437fc7816e8f5c3c38\n',
               'file2.txt': 'file2 contents 2',
               'file3.txt': 'file3 contents'
             }
@@ -639,7 +639,7 @@ describe('Engine', () => {
         Archive: {
           Versions: {
             '2015-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  file1.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  file1.txt: a379624177abc4679cafafa8eae1d73e1478aaa6\n',
               'file1.txt': 'file1 contents'
             }
           }

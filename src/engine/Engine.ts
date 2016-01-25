@@ -3,6 +3,7 @@ import * as fs from 'fs';
 const FileQueue = require('filequeue');
 import * as path from 'path';
 import * as Promise from 'bluebird';
+import * as stream from 'stream';
 import * as winston from 'winston';
 import Archive from './Archive';
 import ArchiveVersion from './ArchiveVersion';
@@ -55,10 +56,10 @@ abstract class Job {
   }
 
   updateStatus(progress: number, message?: string): void {
-    if (message) this._lastMessage = message;
+    if (!this._callback) return;
 
-    if (this._callback)
-      this._callback(progress, this._lastMessage);
+    if (message) this._lastMessage = message;
+    this._callback(progress, this._lastMessage);
   }
 
   abort() {
@@ -151,7 +152,7 @@ class BackupJob extends Job {
                     const readStream = this.source.createReadStream(file);
                     return resolveOnOpen(readStream)
                       .then(() => { this.updateStatus(this._progress.current(i / this.sourceFiles.length).value, `Copying "${file}"`) })
-                      .then(() => this.newVersion.writeFile(file, 'modify', readStream))
+                      .then(() => this.newVersion.writeFile(file, 'modify', readStream, checksums[0]))
                       .then(() => { readStream.destroy() })
                       .then(() => Promise.all([Promise.resolve(checksums[0]), this.newVersion.getFileChecksum(file)]))
                       .then(checksums => verifyChecksums(file, checksums))
@@ -159,24 +160,30 @@ class BackupJob extends Job {
                 })
                 .then(stopPromise); // file was found
             case 'delete':
-              const readStream = this.source.createReadStream(file);
-              return resolveOnOpen(readStream)
+              let sourceChecksum: string;
+              let readStream: stream.Readable;
+              return this.source.getFileChecksum(file)
+                .then(checksum => { sourceChecksum = checksum })
+                .then(() => resolveOnOpen(readStream = this.source.createReadStream(file)))
                 .then(() => { this.updateStatus(this._progress.current(i / this.sourceFiles.length).value, `Copying "${file}"`) })
-                .then(() => this.newVersion.writeFile(file, 'add', readStream))
+                .then(() => this.newVersion.writeFile(file, 'add', readStream, sourceChecksum))
                 .then(() => { readStream.destroy() })
-                .then(() => Promise.all([this.source.getFileChecksum(file), this.newVersion.getFileChecksum(file)]))
+                .then(() => Promise.all([Promise.resolve(sourceChecksum), this.newVersion.getFileChecksum(file)]))
                 .then(checksums => verifyChecksums(file, checksums))
                 .then(stopPromise); // file was found
             }
           })
       ).then(() => {
         // Not rejected, meaning version was not found, so file is new
-        const readStream = this.source.createReadStream(file);
-        return resolveOnOpen(readStream)
+        let sourceChecksum: string;
+        let readStream: stream.Readable;
+        return this.source.getFileChecksum(file)
+          .then(checksum => { sourceChecksum = checksum })
+          .then(() => resolveOnOpen(readStream = this.source.createReadStream(file)))
           .then(() => { this.updateStatus(this._progress.current(i / this.sourceFiles.length).value, `Copying "${file}"`) })
-          .then(() => this.newVersion.writeFile(file, 'add', readStream))
+          .then(() => this.newVersion.writeFile(file, 'add', readStream, sourceChecksum))
           .then(() => { readStream.destroy() })
-          .then(() => Promise.all([this.source.getFileChecksum(file), this.newVersion.getFileChecksum(file)]))
+          .then(() => Promise.all([Promise.resolve(sourceChecksum), this.newVersion.getFileChecksum(file)]))
           .then(checksums => verifyChecksums(file, checksums));
       }, (err) => {
         if (err instanceof StopPromiseError) {

@@ -82,7 +82,7 @@ describe('FilesystemArchive', () => {
           Latest: {},
           Versions: {
             '2000-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  folder/file1.txt: add\n  folder/file2.txt: add\n  folder/file3.txt: add\n  folder/file5.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  folder/file1.txt: abc123\n  folder/file2.txt: abc123\n  folder/file3.txt: abc123\n  folder/file5.txt: abc123\n',
               folder: {
                 'file1.txt': 'file1 2000',
                 'file2.txt': 'file2 2000',
@@ -91,14 +91,14 @@ describe('FilesystemArchive', () => {
               }
             },
             '2001-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  folder/file2.txt: modify\n  folder/file3.txt: delete\n  folder/file4.txt: add\n  folder/file5.txt: delete',
+              '.index': 'source: My Computer\nadd:\n  folder/file4.txt: abc123\nmodify:\n  folder/file2.txt: abc123\ndelete:\n  folder/file3.txt:\n  folder/file5.txt:\n',
               folder: {
                 'file2.txt': 'file2 2001',
                 'file4.txt': 'file4 2001'
               }
             },
             '2002-01-01 00-00-00': {
-              '.index': 'source: My Computer\nfiles:\n  folder/file2.txt: modify\n  folder/file3.txt: add\n',
+              '.index': 'source: My Computer\nadd:\n  folder/file3.txt: abc123\nmodify:\n  folder/file2.txt: abc123\n',
               folder: {
                 'file2.txt': 'file2 2002',
                 'file3.txt': 'file3 2002'
@@ -205,7 +205,7 @@ describe('FilesystemArchive', () => {
     // Create a map with each folder and an index file inside
     const folders: any = folderNames.reduce((map, file) => {
       map[file] = {
-        '.index': 'source: My Computer\nindex:\n'
+        '.index': 'source: My Computer\n'
       };
       return map;
     }, {});
