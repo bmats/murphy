@@ -180,11 +180,12 @@ describe('Config', () => {
       config.fileRegExps = expectedData.fileRegExps.map(pattern => new RegExp(pattern));
       config.ui = expectedData.ui;
 
-      fs.readFile(Config.fileName, { encoding: 'utf8' }, (err, data) => {
+      // Wait a bit for the file to debounce and write before reading
+      setTimeout(() => fs.readFile(Config.fileName, { encoding: 'utf8' }, (err, data) => {
         expect(err).toBeFalsy();
         expect(data).toBe(JSON.stringify(expectedData));
         done();
-      });
+      }), 500);
     });
   });
 });

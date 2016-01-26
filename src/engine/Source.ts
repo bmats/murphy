@@ -59,7 +59,6 @@ export default class Source {
 
           if (stats.isFile()) {
             // Save the file path
-            // TODO: filter regex
             files.push(path);
           } else if (stats.isDirectory()) {
             // Queue the directory to be traversed

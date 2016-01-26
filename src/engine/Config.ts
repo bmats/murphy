@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import * as fs from 'fs';
 import * as winston from 'winston';
 import Source from './Source';
@@ -103,7 +104,7 @@ export default class Config {
     this.write();
   }
 
-  private write(): void {
+  private write = _.debounce(() => {
     const data = {
       sources: this._sources.map(s => s.serialize()),
       archives: this._archives.map(a => a.serialize()),
@@ -116,5 +117,5 @@ export default class Config {
         winston.error('Writing config file failed', { error: err });
       }
     });
-  }
+  }, 250);
 }
