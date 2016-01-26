@@ -5,6 +5,7 @@ import * as winston from 'winston';
 import Config from './engine/Config';
 import Engine from './engine/Engine';
 import Source from './engine/Source';
+import ArchiveVersion from './engine/ArchiveVersion';
 import FilesystemArchive from './engine/fs/FilesystemArchive';
 import {Source as AppSource, Archive as AppArchive} from './app/models';
 
@@ -33,27 +34,27 @@ export default class BackupConnector {
   private _config: Config;
 
   constructor(ipcIn: EventEmitter, browserWindow: GitHubElectron.BrowserWindow) {
-    ipcIn.on('load-config', this.onLoadConfig.bind(this));
-    ipcIn.on('start-backup', this.onStartBackup.bind(this));
-    ipcIn.on('start-restore', this.onStartRestore.bind(this));
-    ipcIn.on('add-source', this.onAddSource.bind(this));
-    ipcIn.on('add-archive', this.onAddArchive.bind(this));
-    ipcIn.on('get-archive-versions', this.onRequestArchiveVersions.bind(this));
-    ipcIn.on('open-archive', this.onOpenArchive.bind(this));
-    ipcIn.on('update-config', this.onUpdateConfig.bind(this));
+    ipcIn.on('loadConfig', this.onLoadConfig.bind(this));
+    ipcIn.on('startBackup', this.onStartBackup.bind(this));
+    ipcIn.on('startRestore', this.onStartRestore.bind(this));
+    ipcIn.on('addSource', this.onAddSource.bind(this));
+    ipcIn.on('addArchive', this.onAddArchive.bind(this));
+    ipcIn.on('requestArchiveVersions', this.onRequestArchiveVersions.bind(this));
+    ipcIn.on('openArchive', this.onOpenArchive.bind(this));
+    ipcIn.on('updateConfig', this.onUpdateConfig.bind(this));
     this._window = browserWindow;
     this._ipcOut = browserWindow.webContents;
   }
 
   onLoadConfig(): void {
     if (this._config) {
-      this._ipcOut.send('config-loaded', this._serializeConfig());
+      this._ipcOut.send('configLoaded', this._serializeConfig());
     } else {
       Config.load()
         .then(config => {
           this._config = config;
           this._engine = new Engine(config);
-          this._ipcOut.send('config-loaded', this._serializeConfig());
+          this._ipcOut.send('configLoaded', this._serializeConfig());
         });
     }
   }
@@ -64,7 +65,7 @@ export default class BackupConnector {
 
     if (!source || !dest) {
       winston.error('Backup source or archive mismatch', { sourceName: arg.source.name, archiveName: arg.destination.name });
-      this._ipcOut.send('backup-error', new Error('Source or archive mismatch.'));
+      this._ipcOut.send('backupError', new Error('Source or archive mismatch.'));
       return;
     }
 
@@ -72,8 +73,8 @@ export default class BackupConnector {
       .then(version => version.getFiles())
       .then(files => {
         winston.info('Backup complete');
-        this._ipcOut.send('backup-complete', {
-          stats: {
+        this._ipcOut.send('backupComplete', {
+          result: {
             count: files.length
           }
         });
@@ -81,7 +82,7 @@ export default class BackupConnector {
       })
       .catch(err => {
         winston.error('Backup error', { error: err });
-        this._ipcOut.send('backup-error', err.toString());
+        this._ipcOut.send('backupError', err.toString());
       })
       .then(() => { this._window.setProgressBar(-1) }); // remove
   }
@@ -93,7 +94,7 @@ export default class BackupConnector {
 
   private _updateUIProgress = _.throttle((type: string, progress: number, message: string) => {
     this._window.setProgressBar(progress);
-    this._ipcOut.send(`${type}-progress`, {
+    this._ipcOut.send(`${type}Progress`, {
       progress: progress,
       message: message
     });
@@ -118,11 +119,11 @@ export default class BackupConnector {
       .then(() => this._engine.runRestore(source, version, arg.destination, this.onRestoreProgress.bind(this)))
       .then(() => {
         winston.info('Restore complete');
-        this._ipcOut.send('restore-complete', null);
+        this._ipcOut.send('restoreComplete', {});
       })
       .catch((err) => {
         winston.error('Restore error', { error: err });
-        this._ipcOut.send('restore-error', err.toString());
+        this._ipcOut.send('restoreError', err.toString());
       })
       .then(() => { this._window.setProgressBar(-1) }); // remove
   }
@@ -159,7 +160,7 @@ export default class BackupConnector {
     }
 
     archive.getVersions()
-      .then(ver => this._ipcOut.send('archive-versions', {
+      .then(ver => this._ipcOut.send('archiveVersions', {
         archive: appArchive,
         versions: ver.map(v => {
           return {

@@ -1,16 +1,21 @@
-import {ipcRenderer} from 'electron';
+import {remote} from 'electron';
+const dialog = remote.dialog;
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import { Engine } from './models';
 import * as utils from './utils';
 import Murphy from './components/Murphy';
 
 require('react-tap-event-plugin')();
 
-ipcRenderer.on('config-loaded', (event, config) => {
-  ReactDOM.render(<Murphy config={config} />, document.getElementById('app'));
-});
-ipcRenderer.send('load-config');
-
 if (process.env.NODE_ENV === 'development') {
   utils.addLiveReload();
 }
+
+const engine = new Engine();
+engine.on('change', () => ReactDOM.render(<Murphy engine={engine} />, document.getElementById('app')));
+
+engine.backupJob.on('error', error => dialog.showErrorBox('Backup error', error.message));
+engine.restoreJob.on('error', error => dialog.showErrorBox('Restore error', error.message));
+
+engine.connect();

@@ -1,4 +1,4 @@
-import {remote, ipcRenderer, shell} from 'electron';
+import {remote, shell} from 'electron';
 const dialog = remote.dialog;
 import * as React from 'react';
 import SwipeableViews from './SwipeableViewsMaxHeight';
@@ -6,7 +6,7 @@ import MUI from 'material-ui';
 import MoreVertIcon from 'material-ui/lib/svg-icons/navigation/more-vert';
 import ThemeManager from 'material-ui/lib/styles/theme-manager';
 import Theme from './MurphyTheme';
-import {Config, Source, Archive, ArchiveVersion} from '../models';
+import {Engine, Source, Archive, ArchiveVersion} from '../models';
 import CardScroller from './CardScroller';
 import BackupConfig from './BackupConfig';
 import RestoreConfig from './RestoreConfig';
@@ -15,7 +15,7 @@ import MessageActionCard from './MessageActionCard';
 import Settings from './Settings';
 
 interface Props {
-  config: Config;
+  engine: Engine;
 }
 
 interface State {
@@ -23,23 +23,12 @@ interface State {
   tabIndex?: number;
   isSettingsOpen?: boolean;
 
-  backup?: JobStatus;
   backupSource?: Source;
   backupArchive?: Archive;
-  backupStats?: { count: number };
 
-  restore?: JobStatus;
   restoreArchive?: Archive;
   restoreVersion?: ArchiveVersion;
   restoreDestination?: string;
-}
-
-class JobStatus {
-  isRunning: boolean = false;
-  hasRun: boolean = false;
-  hasError: boolean = false;
-  progress: number = 0;
-  progressMessage: string = null;
 }
 
 export default class Murphy extends React.Component<Props, State> {
@@ -51,27 +40,23 @@ export default class Murphy extends React.Component<Props, State> {
       tabIndex: 0,
       isSettingsOpen: false,
 
-      backup: new JobStatus(),
-      backupSource: props.config.sources[props.config.sources.length - 1],
-      backupArchive: props.config.archives[props.config.archives.length - 1],
+      backupSource: props.engine.config.sources[props.engine.config.sources.length - 1],
+      backupArchive: props.engine.config.archives[props.engine.config.archives.length - 1],
 
-      restore: new JobStatus(),
-      restoreArchive: props.config.archives[props.config.archives.length - 1],
+      restoreArchive: props.engine.config.archives[props.engine.config.archives.length - 1],
       restoreVersion: null,
       restoreDestination: null
     };
 
-    this.registerIpcCallbacks();
-
     // Prompt before closing if a job is running
     window.onbeforeunload = (e) => {
-      if (this.state.backup.isRunning || this.state.restore.isRunning) {
+      if (this.props.engine.backupJob.isRunning || this.props.engine.restoreJob.isRunning) {
         const result = dialog.showMessageBox(remote.BrowserWindow.getFocusedWindow(), {
           type: 'warning',
           buttons: ['Close', 'Cancel'],
           title: 'Murphy',
           message: 'Are you sure you want to close Murphy?\nThis will stop your ' +
-            (this.state.backup.isRunning ? 'backup' : 'restore') + '.'
+            (this.props.engine.backupJob.isRunning ? 'backup' : 'restore') + '.'
         });
         e.returnValue = (result === 0); // 'Close' button
       }
@@ -116,65 +101,6 @@ export default class Murphy extends React.Component<Props, State> {
     };
   }
 
-  private registerIpcCallbacks() {
-    ipcRenderer.on('backup-progress', (event, arg) => {
-      if (this.state.backup.hasError) return;
-
-      this.setState({
-        backup: Object.assign({}, this.state.backup, {
-          progress: arg.progress,
-          progressMessage: arg.message
-        })
-      });
-    });
-    ipcRenderer.on('backup-complete', (event, arg) => {
-      this.setState({
-        backup: Object.assign({}, this.state.backup, {
-          isRunning: false
-        }),
-        backupStats: arg.stats
-      });
-    });
-    ipcRenderer.on('backup-error', (event, arg) => {
-      this.setState({
-        backup: Object.assign({}, this.state.backup, {
-          isRunning: false,
-          hasError: true,
-          progressMessage: arg
-        })
-      });
-      dialog.showErrorBox('Backup error', arg);
-    });
-
-    ipcRenderer.on('restore-progress', (event, arg) => {
-      if (this.state.restore.hasError) return;
-
-      this.setState({
-        restore: Object.assign({}, this.state.restore, {
-          progress: arg.progress,
-          progressMessage: arg.message
-        })
-      });
-    });
-    ipcRenderer.on('restore-complete', (event, arg) => {
-      this.setState({
-        restore: Object.assign({}, this.state.restore, {
-          isRunning: false
-        })
-      });
-    });
-    ipcRenderer.on('restore-error', (event, arg) => {
-      this.setState({
-        restore: Object.assign({}, this.state.restore, {
-          isRunning: false,
-          hasError: true,
-          progressMessage: arg
-        })
-      });
-      dialog.showErrorBox('Restore error', arg);
-    });
-  }
-
   private onStart() {
     if (this.state.tabIndex === 0) {
       this.onStartBackup();
@@ -184,34 +110,11 @@ export default class Murphy extends React.Component<Props, State> {
   }
 
   private onStartBackup() {
-    const newBackup = this.state.backup;
-    newBackup.isRunning = true;
-    newBackup.hasRun = true;
-    newBackup.hasError = false;
-    this.setState({
-      backup: newBackup
-    });
-
-    ipcRenderer.send('start-backup', {
-      source: this.state.backupSource,
-      destination: this.state.backupArchive
-    });
+    this.props.engine.backupJob.start(this.state.backupSource, this.state.backupArchive);
   }
 
   private onStartRestore() {
-    const newRestore = this.state.restore;
-    newRestore.isRunning = true;
-    newRestore.hasRun = true;
-    newRestore.hasError = false;
-    this.setState({
-      restore: newRestore
-    });
-
-    ipcRenderer.send('start-restore', {
-      source: this.state.restoreArchive,
-      version: { date: this.state.restoreVersion.date.valueOf() }, // serialize
-      destination: this.state.restoreDestination
-    });
+    this.props.engine.restoreJob.start(this.state.restoreArchive, this.state.restoreVersion, this.state.restoreDestination);
   }
 
   private onTabChange(index) {
@@ -239,7 +142,7 @@ export default class Murphy extends React.Component<Props, State> {
   }
 
   private onOpenBackup() {
-    ipcRenderer.send('open-archive', this.state.backupArchive);
+    this.props.engine.openArchive(this.state.backupArchive);
   }
 
   private onOpenRestore() {
@@ -256,39 +159,44 @@ export default class Murphy extends React.Component<Props, State> {
 
   private get isRunReady(): boolean {
     if (this.state.tabIndex === 0) {
-      return !this.state.backup.isRunning && !!this.state.backupSource && !!this.state.backupArchive;
+      return !this.props.engine.backupJob.isRunning && !!this.state.backupSource && !!this.state.backupArchive;
     } else if (this.state.tabIndex === 1) {
-      return !this.state.restore.isRunning && !!this.state.restoreArchive && !!this.state.restoreVersion && !!this.state.restoreDestination;
+      return !this.props.engine.restoreJob.isRunning && !!this.state.restoreArchive && !!this.state.restoreVersion &&
+        !!this.state.restoreDestination;
     }
     return false;
   }
 
   render() {
+    const backupJob = this.props.engine.backupJob, restoreJob = this.props.engine.restoreJob;
+
     const backupCards = [
-      <BackupConfig key="config" sources={this.props.config.sources} archives={this.props.config.archives}
+      <BackupConfig key="config" engine={this.props.engine}
         source={this.state.backupSource} archive={this.state.backupArchive}
         onSourceChange={this.onBackupSourceChange.bind(this)} onArchiveChange={this.onBackupArchiveChange.bind(this)} />
     ];
-    if (this.state.backup.hasRun) {
-      backupCards.push(<ProgressCard key="progress" progress={this.state.backup.progress}
-        message={this.state.backup.progressMessage} error={this.state.backup.hasError} />);
+    if (backupJob.hasRun) {
+      backupCards.push(<ProgressCard key="progress" progress={backupJob.progress}
+        message={backupJob.progressMessage} error={backupJob.hasError} />);
     }
-    if (this.state.backup.hasRun && !this.state.backup.isRunning && !this.state.backup.hasError) {
-      const backupResultMessage = this.state.backupStats.count +
-        ' file change' + (this.state.backupStats.count !== 1 ? 's' : '') + ' backed up.';
+    if (backupJob.hasRun && !backupJob.isRunning && !backupJob.hasError) {
+      const backupResultMessage = backupJob.result.count +
+        ' file change' + (backupJob.result.count !== 1 ? 's' : '') + ' backed up.';
       backupCards.push(<MessageActionCard message={backupResultMessage}
         actionLabel="Open Backup Folder" onClick={this.onOpenBackup.bind(this)} />);
     }
 
     const restoreCards = [
-      <RestoreConfig key="config" archives={this.props.config.archives}
-        archive={this.state.restoreArchive} version={this.state.restoreVersion} destination={this.state.restoreDestination}
-        onArchiveChange={this.onRestoreArchiveChange.bind(this)} onVersionChange={this.onRestoreVersionChange.bind(this)} onDestinationChange={this.onRestoreDestinationChange.bind(this)} />
+      <RestoreConfig key="config" engine={this.props.engine} archive={this.state.restoreArchive}
+        version={this.state.restoreVersion} destination={this.state.restoreDestination}
+        onArchiveChange={this.onRestoreArchiveChange.bind(this)} onVersionChange={this.onRestoreVersionChange.bind(this)}
+        onDestinationChange={this.onRestoreDestinationChange.bind(this)} />
     ];
-    if (this.state.restore.hasRun) {
-      restoreCards.push(<ProgressCard key="progress" progress={this.state.restore.progress} message={this.state.restore.progressMessage} error={this.state.restore.hasError} />);
+    if (restoreJob.hasRun) {
+      restoreCards.push(<ProgressCard key="progress" progress={restoreJob.progress}
+        message={restoreJob.progressMessage} error={restoreJob.hasError} />);
     }
-    if (this.state.restore.hasRun && !this.state.restore.isRunning && !this.state.restore.hasError) {
+    if (restoreJob.hasRun && !restoreJob.isRunning && !restoreJob.hasError) {
       restoreCards.push(<MessageActionCard message="Restore completed."
         actionLabel="Open Restore Folder" onClick={this.onOpenRestore.bind(this)} />);
     }
@@ -312,8 +220,7 @@ export default class Murphy extends React.Component<Props, State> {
             <path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
           </MUI.SvgIcon>
         </MUI.FloatingActionButton>
-        <Settings open={this.state.isSettingsOpen} onClose={this.onCloseSettings.bind(this)}
-          fileRegExps={this.props.config.fileRegExps} isRegExpEnabled={!!this.props.config.ui.isRegExpEnabled} />
+        <Settings engine={this.props.engine} open={this.state.isSettingsOpen} onClose={this.onCloseSettings.bind(this)} />
       </div>
     );
   }

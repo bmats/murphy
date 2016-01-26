@@ -1,16 +1,16 @@
-import {remote, ipcRenderer} from 'electron';
+import {remote} from 'electron';
 const dialog = remote.dialog;
 import * as moment from 'moment';
 import * as path from 'path';
 import * as React from 'react';
 import MUI from 'material-ui';
 import Theme from './MurphyTheme';
-import {Archive, ArchiveVersion} from '../models';
+import {Engine, Archive, ArchiveVersion} from '../models';
 import AddSelectField from './AddSelectField';
 import VerticalSeparator from './VerticalSeparator';
 
 interface Props {
-  archives: Archive[];
+  engine: Engine;
   archive: Archive;
   version: ArchiveVersion;
   destination: string;
@@ -31,16 +31,16 @@ export default class RestoreConfig extends React.Component<Props, State> {
       archiveVersions: []
     };
 
-    ipcRenderer.send('get-archive-versions', this.props.archive);
-    ipcRenderer.on('archive-versions', (event, arg) => {
-      if (arg.archive.name === this.props.archive.name) {
-        arg.versions.forEach(v => v.date = new Date(v.date)); // unserialize
+    props.engine.on('archiveVersions', (archive, versions) => {
+      if (archive.name === this.props.archive.name) {
+        versions.forEach(v => v.date = new Date(v.date)); // unserialize
         this.setState({
-          archiveVersions: arg.versions
+          archiveVersions: versions
         });
-        if (this.props.onVersionChange) this.props.onVersionChange(arg.versions[0]);
+        if (this.props.onVersionChange) this.props.onVersionChange(versions[0]);
       }
     });
+    props.engine.requestArchiveVersions(props.archive);
   }
 
   componentWillReceiveProps(nextProps: Props) {
@@ -49,7 +49,7 @@ export default class RestoreConfig extends React.Component<Props, State> {
         archiveVersions: []
       });
       if (this.props.onVersionChange) this.props.onVersionChange(null);
-      ipcRenderer.send('get-archive-versions', nextProps.archive);
+      this.props.engine.requestArchiveVersions(nextProps.archive);
     }
   }
 
@@ -95,10 +95,9 @@ export default class RestoreConfig extends React.Component<Props, State> {
       properties: ['openDirectory', 'createDirectory']
     }, (folders) => {
       if (!folders) return;
-      ipcRenderer.send('add-archive', {
-        name: path.basename(folders[0]), // TODO: present dialog to name backup
-        path: folders[0]
-      });
+      this.props.engine.addArchive(
+        path.basename(folders[0]), // TODO: present dialog to name backup
+        folders[0]);
       this.setState({
         archiveVersions: []
       });
@@ -107,7 +106,7 @@ export default class RestoreConfig extends React.Component<Props, State> {
   }
 
   private onArchiveNameChange(archiveName: string) {
-    this.onArchiveChange(this.props.archives.find(a => a.name === archiveName));
+    this.onArchiveChange(this.props.engine.config.archives.find(a => a.name === archiveName));
   }
 
   private onArchiveChange(newArchive: Archive) {
@@ -116,7 +115,7 @@ export default class RestoreConfig extends React.Component<Props, State> {
     });
     if (this.props.onArchiveChange) this.props.onArchiveChange(newArchive);
     if (this.props.onVersionChange) this.props.onVersionChange(null);
-    ipcRenderer.send('get-archive-versions', newArchive);
+    this.props.engine.requestArchiveVersions(newArchive);
   }
 
   private onVersionChange(e, index: number) {
@@ -135,7 +134,9 @@ export default class RestoreConfig extends React.Component<Props, State> {
   }
 
   render() {
-    let archiveIndex = this.props.archives.indexOf(this.props.archive);
+    let archiveIndex = this.props.archive
+      ? this.props.engine.config.archives.findIndex(a => a.name === this.props.archive.name)
+      : 0;
     if (archiveIndex < 0) archiveIndex = 0;
 
     let versionIndex = this.state.archiveVersions.indexOf(this.props.version);
@@ -155,7 +156,7 @@ export default class RestoreConfig extends React.Component<Props, State> {
             What
             <small style={this.styles.headingCaption}>What backup should I restore from?</small>
           </h2>
-          <AddSelectField label="Backup" items={this.props.archives.map(a => a.name)} value={archiveIndex}
+          <AddSelectField label="Backup" items={this.props.engine.config.archives.map(a => a.name)} value={archiveIndex}
             onAdd={this.onArchiveAdd.bind(this)} onChange={this.onArchiveNameChange.bind(this)} />
           <br />
           <MUI.SelectField value={versionIndex} onChange={this.onVersionChange.bind(this)} labelStyle={{ paddingRight: 0 }}>

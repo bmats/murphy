@@ -1,17 +1,13 @@
-import {ipcRenderer} from 'electron';
-import * as _ from 'lodash';
 import * as React from 'react';
 import MUI from 'material-ui';
 import Theme from './MurphyTheme';
-import {Source, Archive, ArchiveVersion} from '../models';
+import {Engine, Source, Archive, ArchiveVersion} from '../models';
 
 interface Props {
+  engine: Engine;
   open: boolean;
   onClose?: () => any;
   style?: {};
-
-  fileRegExps: string[];
-  isRegExpEnabled: boolean;
 }
 
 interface State {
@@ -43,9 +39,9 @@ export default class Settings extends React.Component<Props, State> {
     super(props);
 
     this.state = {
-      fileRegExps: props.fileRegExps,
+      fileRegExps: props.engine.config.fileRegExps,
       regExpError: null,
-      isRegExpEnabled: props.isRegExpEnabled
+      isRegExpEnabled: !!props.engine.config.ui.isRegExpEnabled
     };
   }
 
@@ -104,12 +100,11 @@ export default class Settings extends React.Component<Props, State> {
   }
 
   private onSave() {
-    ipcRenderer.send('update-config', {
-      fileRegExps: this.state.fileRegExps,
-      ui: {
-        isRegExpEnabled: this.state.isRegExpEnabled
-      }
-    });
+    this.props.engine.config.fileRegExps = this.state.fileRegExps;
+    this.props.engine.config.ui = {
+      isRegExpEnabled: this.state.isRegExpEnabled
+    };
+
     if (this.props.onClose) this.props.onClose();
   }
 
@@ -118,10 +113,11 @@ export default class Settings extends React.Component<Props, State> {
   }
 
   render() {
-    let defaultFileRegExpValues = this.props.fileRegExps;
+    let defaultFileRegExpValues = this.props.engine.config.fileRegExps;
     if (!this.state.isRegExpEnabled) {
       defaultFileRegExpValues = defaultFileRegExpValues.map(pattern => unescapeRegExp(pattern));
     }
+    const defaultRegExpEnabled = !!this.props.engine.config.ui.isRegExpEnabled;
 
     const hasError = !!this.state.regExpError;
 
@@ -133,7 +129,7 @@ export default class Settings extends React.Component<Props, State> {
       <MUI.Dialog title="Settings" actions={actions} modal={true} open={this.props.open}>
         <MUI.TextField floatingLabelText="Files names to ignore" hintText="Text to look for in file names" multiLine fullWidth
           errorText={this.state.regExpError} defaultValue={defaultFileRegExpValues.join('\n')} onChange={this.onFileRegexChange.bind(this)} />
-        <MUI.Checkbox label="Enable regular expressions" defaultChecked={this.props.isRegExpEnabled} onCheck={this.onRegExpEnabledCheck.bind(this)} />
+        <MUI.Checkbox label="Enable regular expressions" defaultChecked={defaultRegExpEnabled} onCheck={this.onRegExpEnabledCheck.bind(this)} />
       </MUI.Dialog>
     );
   }
