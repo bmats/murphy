@@ -6,7 +6,6 @@ export class Engine extends events.EventEmitter {
   private _backupJob: BackupJob;
   private _restoreJob: RestoreJob;
 
-  private _isConfigLoaded: boolean = false;
   private _addedSourceName: string = null;
   private _addedArchiveName: string = null;
 
@@ -21,25 +20,15 @@ export class Engine extends events.EventEmitter {
     ipcRenderer.on('configLoaded', (event, arg) => {
       this._config.loadIPC(arg);
 
-      if (!this._isConfigLoaded) {
-        // Set initial values from config
-        this._backupJob.source = this._config.sources[this._config.sources.length - 1];
-        this._backupJob.destination = this._config.archives[this._config.archives.length - 1];
-        this._restoreJob.source = this._config.archives[this._config.archives.length - 1];
-
-        this._isConfigLoaded = true;
-      }
-
-      // If a source/archive was just added, use it in the backup and restore
+      // If a source/archive was just added, emit an event now that it is in the config
       if (this._addedSourceName) {
         const newSource = this._config.sources.find(s => s.name === this._addedSourceName);
-        this._backupJob.source = newSource;
+        this.emit('sourceAdded', newSource);
         this._addedSourceName = null;
       }
       if (this._addedArchiveName) {
         const newArchive = this._config.archives.find(a => a.name === this._addedArchiveName);
-        this._backupJob.destination = newArchive;
-        this._restoreJob.source = newArchive;
+        this.emit('archiveAdded', newArchive);
         this._addedArchiveName = null;
       }
 

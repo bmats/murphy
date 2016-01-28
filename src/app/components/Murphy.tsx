@@ -48,6 +48,15 @@ export default class Murphy extends React.Component<Props, State> {
       restoreDestination: null
     };
 
+    // If a source/archive was added, use it in the UI
+    props.engine.on('sourceAdded', newSource => this.setState({
+      backupSource: newSource
+    }));
+    props.engine.on('archiveAdded', newArchive => this.setState({
+      backupArchive: newArchive,
+      restoreArchive: newArchive
+    }));
+
     // Prompt before closing if a job is running
     window.onbeforeunload = (e) => {
       if (this.props.engine.backupJob.isRunning || this.props.engine.restoreJob.isRunning) {
