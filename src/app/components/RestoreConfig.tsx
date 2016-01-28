@@ -141,8 +141,10 @@ export default class RestoreConfig extends React.Component<Props, State> {
 
     let versionIndex = this.state.archiveVersions.indexOf(this.props.version);
     if (versionIndex < 0) versionIndex = 0;
-    const versionItems = this.state.archiveVersions.map((v, i) =>
-      <MUI.MenuItem key={i} primaryText={moment(v.date).format('MMM D, YYYY h:mm A')} value={i} />);
+    const versionItems = this.state.archiveVersions.map((v, i) => {
+      const date = moment(v.date).format('MMM D, YYYY h:mm A');
+      return <MUI.MenuItem key={i} primaryText={date} value={i} />;
+    });
 
     let destinationText;
     if (this.props.destination) {

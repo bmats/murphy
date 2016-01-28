@@ -2,7 +2,6 @@ import * as _ from 'lodash';
 import * as React from 'react';
 const ReactDOM = require('react-dom');
 import MUI from 'material-ui';
-import ThemeManager from 'material-ui/lib/styles/theme-manager';
 import Theme from './MurphyTheme';
 
 interface Props {

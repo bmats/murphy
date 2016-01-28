@@ -1,6 +1,5 @@
 import * as React from 'react';
 import MUI from 'material-ui';
-import ThemeManager from 'material-ui/lib/styles/theme-manager';
 
 interface Props {
   label: string;

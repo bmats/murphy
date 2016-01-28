@@ -1,6 +1,6 @@
-import Colors from 'material-ui/lib/styles/colors';
-import ColorManipulator from 'material-ui/lib/utils/color-manipulator';
-import Spacing from 'material-ui/lib/styles/spacing';
+import * as Colors from 'material-ui/lib/styles/colors';
+import * as ColorManipulator from 'material-ui/lib/utils/color-manipulator';
+import * as Spacing from 'material-ui/lib/styles/spacing';
 
 /*
  *  Light Theme is the default theme used in material-ui. It is guaranteed to
