@@ -1,6 +1,9 @@
 import gulp from 'gulp';
 import gulpLoadPlugins from 'gulp-load-plugins';
 import Jasmine from 'jasmine';
+import packager from 'electron-packager';
+import rimraf from 'rimraf';
+import runSequence from 'run-sequence';
 import SpecReporter from 'jasmine-spec-reporter';
 
 const $ = gulpLoadPlugins();
@@ -82,6 +85,60 @@ gulp.task('test', ['typescript', 'test-typescript'], () => {
 });
 
 gulp.task('start', $.shell.task('electron .'));
+
+gulp.task('clean', (done) => {
+  rimraf(paths.build, done);
+});
+
+gulp.task('package', (done) => {
+  runSequence('clean', 'build', () => {
+    const packageJson = require('./package.json');
+    const year = new Date().getFullYear();
+    packager({
+      dir: '.',
+      out: './dist',
+      name: packageJson.productName,
+      platform: 'darwin,win32',
+      arch: 'x64',
+      version: packageJson.electronVersion,
+      icon: './assets/Murphy',
+      'app-bundle-id': 'com.bmats.murphy',
+      'app-category-type': 'public.app-category.productivity',
+      'app-version': packageJson.version,
+      'helper-bundle-id': 'com.bmats.murphy.helper',
+      prune: true,
+      'version-string': {
+        CompanyName: packageJson.author,
+        LegalCopyright: `Copyright (C) ${year} ${packageJson.author}. All rights reserved.`,
+        FileDescription: packageJson.productName,
+        OriginalFilename: packageJson.productName + '.exe',
+        FileVersion: packageJson.electronVersion,
+        ProductVersion: packageJson.version,
+        ProductName: packageJson.productName,
+        InternalName: packageJson.productName
+      },
+      ignore: [
+        '\\.babelrc',
+        '\\.DS_Store',
+        '\\.gitignore',
+        '\\.jshintrc',
+        '\\.log',
+        '\\.travis\\.yml',
+        'gulpfile\\.babel\\.js',
+        'tsconfig\\.json',
+        'tsd\\.json',
+        // '^/assets($|/)', // icons cannot be ignored
+        '^/assets/icon.ai',
+        '^/assets/Murphy.iconset($|/)',
+        '^/dist($|/)',
+        '^/spec($|/)',
+        '^/src($|/)',
+        '^/static($|/)',
+        '^/typings($|/)'
+      ]
+    }, done);
+  });
+});
 
 gulp.task('build', ['typescript', 'copy', 'stylus']);
 gulp.task('default', ['watch']);
