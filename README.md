@@ -1,5 +1,7 @@
 # Murphy
 
+![Build status](https://travis-ci.org/bmats/murphy.svg?branch=master)
+
 <img src="assets/Murphy.iconset/icon_128x128.png" align="right">
 
 Murphy is a backup program which aims to make backing up and restoring files as painless as possible.
