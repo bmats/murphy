@@ -1,8 +1,9 @@
 import gulp from 'gulp';
 import gulpLoadPlugins from 'gulp-load-plugins';
 import Jasmine from 'jasmine';
+import async from 'async';
 import packager from 'electron-packager';
-import rimraf from 'rimraf';
+import rmrf from 'rimraf';
 import runSequence from 'run-sequence';
 import SpecReporter from 'jasmine-spec-reporter';
 
@@ -13,7 +14,8 @@ const paths = {
   static: ['static/**/*', '!static/styles/*'],
   styles: 'static/styles/*',
   build: './build',
-  spec: 'spec/**/*.ts'
+  spec: 'spec/**/*.ts',
+  dist: './dist',
 };
 
 function logError(err) {
@@ -87,7 +89,10 @@ gulp.task('test', ['typescript', 'test-typescript'], () => {
 gulp.task('start', $.shell.task('electron .'));
 
 gulp.task('clean', (done) => {
-  rimraf(paths.build, done);
+  async.parallel([
+    cb => rmrf(paths.build, cb),
+    cb => rmrf(paths.dist, cb)
+  ], done);
 });
 
 gulp.task('package', (done) => {
@@ -96,7 +101,7 @@ gulp.task('package', (done) => {
     const year = new Date().getFullYear();
     packager({
       dir: '.',
-      out: './dist',
+      out: paths.dist,
       name: packageJson.productName,
       platform: 'darwin,win32',
       arch: 'x64',
