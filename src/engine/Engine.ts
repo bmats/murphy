@@ -217,7 +217,7 @@ class BackupJob extends Job {
               if (!(file in foundFiles)) {
                 foundFiles[file] = true;
 
-                if (_.contains(['add', 'modify'], status) && this.sourceFiles.indexOf(file) < 0) {
+                if (_.includes(['add', 'modify'], status) && this.sourceFiles.indexOf(file) < 0) {
                   // File not found, so it was deleted
                   return this.newVersion.writeFile(file, 'delete');
                 }

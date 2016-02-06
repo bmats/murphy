@@ -10,9 +10,7 @@
     "postinstall": "tsd install",
     "start": "electron .",
     "test": "gulp test",
-
     "package": "gulp package",
-
     "build": "npm run package && npm run build:osx && npm run build:win",
     "build:osx": "electron-builder dist/Murphy-darwin-x64/Murphy.app --platform=osx --out=dist --config=builder.json && mv dist/Murphy.dmg \"dist/Murphy OSX.dmg\"",
     "build:win": "electron-builder dist/Murphy-win32-x64 --platform=win --out=dist --config=builder.json && (cd dist; zip -D \"Murphy Windows.zip\" \"Murphy Setup.exe\")"
@@ -32,13 +30,13 @@
     "bluebird": "^3.0.6",
     "filequeue": "^0.5.0",
     "js-yaml": "^3.4.6",
-    "lodash": "^3.10.1",
+    "lodash": "^4.2.1",
     "material-ui": "^0.14.3",
     "mkdirp": "^0.5.1",
-    "moment": "^2.11.1",
+    "moment": "^2.11.2",
     "react": "^0.14.7",
     "react-dom": "^0.14.3",
-    "react-motion": "^0.3.1",
+    "react-motion": "^0.4.2",
     "react-tap-event-plugin": "^0.2.1",
     "winston": "^2.1.1"
   },
@@ -62,7 +60,7 @@
     "mockdate": "^1.0.3",
     "rimraf": "^2.5.1",
     "run-sequence": "^1.1.5",
-    "stylus": "^0.52.4",
+    "stylus": "^0.53.0",
     "tsd": "^0.6.5",
     "typescript": "^1.7.3"
   }
