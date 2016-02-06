@@ -1,7 +1,7 @@
 {
   "name": "murphy",
   "productName": "Murphy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "electronVersion": "0.36.5",
   "description": "Simple backup and restore.",
   "private": true,
