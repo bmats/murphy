@@ -1,3 +1,17 @@
 language: node_js
 node_js:
   - '5.1'
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y wine nsis
+before_deploy: npm run build
+deploy:
+  provider: releases
+  api_key:
+    secure: O/U8ljcXM/+g2/j3dVnM9mxvqijN9QWRAq7+AyfOrtM4s7r4C6E8q+dl87R6Cv7Et8mcQEXXKNdwqdQUeDs3kSPaFyM15y1SLpQJ2pnDCGsk1IIQnrImT7+uVV71iyFT5ihHOvG+RdumssVgrmqaTxmJsAHlEhKXaM8KkhyuLOT6j0bB5EeXuB3peC7OsDWAGvXqLjGstybHxPlQW1LDa4sw01l+2znscOfrSiTB67kukdjBF+7hXDNIZGOAQZGuub3/L/fc4TJ4/VTRKbQZ4/ZxRpk0lHjwvxqwDNoZKrVLpxGpVu0cUidKPER5AtkxTXaRs4gnz3YDN467ITIlGvwBoxwUjIez7Biy+V+Ytzb9D5DBWkm3pHhHCDk0Y1wn9EADdy5K+RIgELcPHLF/Ljdbi1CsyvjsQVvSsyCV0jb9Uafa5QJMhkJi54o8wbTcWtt/SyRoObDwoA2fIBualwFWZfrdNFvKJLWtiQqScklx71M36qr9iY/6I6rwalg4W3C/06n1WVQReoUyEeaLjYBt7ppdLqs53ru1QDz3ZCBUWgXIpdKPszb8QsIVRNay8gLz7igBPntcJWmrppT1ISXXHCidBYojZk6j9vEYjVR7w7Z8og0XUtiDTTxn67+I1jDhzOddh1C1T6rY7GTQo1FsZuOlPDqKCHbnfD5V+cw=
+  file:
+    - dist/Murphy OSX.dmg
+    - dist/Murphy Windows.zip
+  skip_cleanup: true
+  on:
+    tags: true

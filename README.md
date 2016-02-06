@@ -1,6 +1,6 @@
 # Murphy
 
-![Build status](https://travis-ci.org/bmats/murphy.svg?branch=master)
+[![Build status](https://travis-ci.org/bmats/murphy.svg?branch=master)](https://travis-ci.org/bmats/murphy) [![Dependency Status](https://david-dm.org/bmats/murphy.svg)](https://david-dm.org/bmats/murphy)
 
 <img src="assets/Murphy.iconset/icon_128x128.png" align="right">
 
