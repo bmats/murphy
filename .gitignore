@@ -3,4 +3,5 @@ typings
 *.log
 
 /build
+/coverage
 /dist

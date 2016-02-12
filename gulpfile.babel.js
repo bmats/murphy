@@ -16,6 +16,7 @@ const paths = {
   build: './build',
   spec: 'spec/**/*.ts',
   dist: './dist',
+  coverage: './coverage',
 };
 
 function logError(err) {
@@ -91,7 +92,8 @@ gulp.task('start', $.shell.task('electron .'));
 gulp.task('clean', (done) => {
   async.parallel([
     cb => rmrf(paths.build, cb),
-    cb => rmrf(paths.dist, cb)
+    cb => rmrf(paths.dist, cb),
+    cb => rmrf(paths.coverage, cb)
   ], done);
 });
 

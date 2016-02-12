@@ -1,0 +1,3 @@
+instrumentation:
+  root: ./build/src/engine
+  include-all-sources: true

@@ -1,6 +1,8 @@
 # Murphy
 
-[![Build status](https://travis-ci.org/bmats/murphy.svg?branch=master)](https://travis-ci.org/bmats/murphy) [![Dependency Status](https://david-dm.org/bmats/murphy.svg)](https://david-dm.org/bmats/murphy)
+[![Build status](https://travis-ci.org/bmats/murphy.svg?branch=master)](https://travis-ci.org/bmats/murphy)
+[![Coverage Status](https://coveralls.io/repos/github/bmats/murphy/badge.svg?branch=master)](https://coveralls.io/github/bmats/murphy?branch=master)
+[![Dependency Status](https://david-dm.org/bmats/murphy.svg)](https://david-dm.org/bmats/murphy)
 
 <img src="assets/Murphy.iconset/icon_128x128.png" align="right">
 
