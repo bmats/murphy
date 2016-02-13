@@ -9,7 +9,7 @@
   "scripts": {
     "postinstall": "tsd install",
     "start": "electron .",
-    "test:coverage": "istanbul cover jasmine && cat ./coverage/lcov.info | coveralls",
+    "test:coverage": "ts-node --disableWarnings node_modules/istanbul/lib/cli.js cover jasmine && cat ./coverage/lcov.info | coveralls",
     "test": "gulp test && npm run test:coverage",
     "package": "gulp package",
     "build": "npm run package && npm run build:osx && npm run build:win",
@@ -56,7 +56,7 @@
     "gulp-stylus": "^2.1.1",
     "gulp-typescript": "^2.10.0",
     "gulp-util": "^3.0.7",
-    "istanbul": "^0.4.2",
+    "istanbul": "1.0.0-alpha.2",
     "jasmine": "^2.4.1",
     "jasmine-spec-reporter": "^2.4.0",
     "mock-fs": "^3.5.0",
@@ -64,6 +64,7 @@
     "rimraf": "^2.5.1",
     "run-sequence": "^1.1.5",
     "stylus": "^0.53.0",
+    "ts-node": "^0.5.5",
     "tsd": "^0.6.5",
     "typescript": "^1.7.3"
   }

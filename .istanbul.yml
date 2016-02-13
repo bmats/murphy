@@ -1,3 +1,5 @@
 instrumentation:
-  root: ./build/src/engine
+  root: ./src/engine
+  extensions:
+    - .ts
   include-all-sources: true

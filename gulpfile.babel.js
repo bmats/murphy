@@ -83,7 +83,7 @@ gulp.task('test', ['typescript', 'test-typescript'], () => {
     displayStacktrace: 'summary',
     displayPendingSpec: true
   }));
-  runner.loadConfigFile('spec/support/jasmine.json');
+  runner.loadConfigFile('spec/support/jasmine-transpiled.json');
   runner.execute();
 });
 
